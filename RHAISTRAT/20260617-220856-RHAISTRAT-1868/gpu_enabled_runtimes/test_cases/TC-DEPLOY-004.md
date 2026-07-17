@@ -14,25 +14,32 @@ upgrade_phase: post
 `mlserver-cuda-runtime` template as a resource and renders correctly.
 
 **Preconditions**:
+
 - Access to the `odh-model-controller` repository or deployed
   configuration
 
 **Test Steps**:
+
 1. Read the `kustomization.yaml` file:
+
    ```bash
    cat odh-model-controller/config/runtimes/kustomization.yaml
    ```
+
 2. Verify the GPU runtime template file is listed in the `resources`
    section.
 3. Run `kustomize build` to validate the kustomization renders
    without errors:
+
    ```bash
    kustomize build odh-model-controller/config/runtimes/
    ```
+
 4. Confirm the rendered output includes the `mlserver-cuda-runtime`
    ClusterServingRuntime resource alongside the existing CPU runtime.
 
 **Expected Results**:
+
 - `kustomization.yaml` contains an entry for the GPU runtime template
   file in its `resources` list
 - `kustomize build` completes without errors

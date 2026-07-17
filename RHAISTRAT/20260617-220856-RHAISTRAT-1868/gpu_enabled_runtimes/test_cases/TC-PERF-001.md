@@ -16,13 +16,16 @@ future SLO establishment only, with no pass/fail assertions on
 latency values.
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA and NVIDIA GPU Operator 12.9+
 - GPU InferenceService `resnet-gpu` deployed with
   `mlserver-cuda-runtime` and Ready (TC-DEPLOY-002)
 - Load testing tool available (Locust or k6 recommended)
 
 **Test Steps**:
+
 1. Establish baseline latency with a single request:
+
    ```bash
    URL=$(oc get inferenceservice resnet-gpu \
      -o jsonpath='{.status.url}')
@@ -31,6 +34,7 @@ latency values.
      -H "Content-Type: application/json" \
      -d @resnet-input.json
    ```
+
 2. Run a load test at 10 concurrent requests for 60 seconds.
 3. Run a load test at 50 concurrent requests for 60 seconds.
 4. Run a load test at 100 concurrent requests for 60 seconds.
@@ -38,6 +42,7 @@ latency values.
    concurrency level.
 
 **Expected Results**:
+
 - All requests at each concurrency level return HTTP `200` with
   valid inference output (error rate below 1%)
 - Latency metrics (p50, p95, p99) are recorded for each concurrency

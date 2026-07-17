@@ -15,6 +15,7 @@ list due to the `opendatahub.io/dashboard: "true"` label, without any
 Dashboard code changes.
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA installed
 - `mlserver-cuda-runtime` ClusterServingRuntime applied in
   `redhat-ods-applications` namespace with
@@ -23,6 +24,7 @@ Dashboard code changes.
 - `data-scientist` user credentials for Dashboard login
 
 **Test Steps**:
+
 1. Log in to the RHOAI Dashboard as a `data-scientist` user.
 2. Navigate to the model serving section (Data Science Projects >
    select project > Deploy model).
@@ -33,6 +35,7 @@ Dashboard code changes.
    (`mlserver-onnx`) by name.
 
 **Expected Results**:
+
 - The runtime selection dropdown includes an entry for
   `mlserver-cuda-runtime`
 - The GPU runtime is listed alongside the existing CPU

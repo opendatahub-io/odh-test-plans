@@ -15,6 +15,7 @@ ClusterServingRuntime within their project namespace, following the
 same authorization boundaries as CPU runtimes.
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA and NVIDIA GPU Operator 12.9+
 - `namespace-admin` user with admin role in the test namespace
 - `mlserver-cuda-runtime` ClusterServingRuntime applied in
@@ -23,12 +24,16 @@ same authorization boundaries as CPU runtimes.
   `infrastructure.opendatahub.io/v1`) available
 
 **Test Steps**:
+
 1. Authenticate as the `namespace-admin` user:
+
    ```bash
    oc login -u namespace-admin -p <password>
    oc project test-gpu-serving
    ```
+
 2. Create an InferenceService using the GPU runtime:
+
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: serving.kserve.io/v1beta1
@@ -47,17 +52,22 @@ same authorization boundaries as CPU runtimes.
          storageUri: s3://models/resnet-50-onnx/
    EOF
    ```
+
 3. Verify the InferenceService was created:
+
    ```bash
    oc get inferenceservice resnet-gpu-rbac
    ```
+
 4. Wait for the InferenceService to reach `Ready`:
+
    ```bash
    oc wait inferenceservice/resnet-gpu-rbac --for=condition=Ready \
      --timeout=300s
    ```
 
 **Expected Results**:
+
 - InferenceService is created without authorization errors
 - The InferenceService reaches `Ready` state
 - The namespace-admin has the same level of access to GPU runtime

@@ -13,6 +13,7 @@ The following gaps were resolved by the context document
 (RHAISTRAT-1868-context.md) incorporated on 2026-07-17:
 
 ### Scope & Endpoints (5 of 7 resolved)
+
 - ~~model-settings.json GPU configuration schema not defined~~ —
   **Resolved**: follows upstream MLServer settings schema (ModelSettings,
   ModelParameters, Settings from opendatahub-io/MLServer repo)
@@ -26,6 +27,7 @@ The following gaps were resolved by the context document
   standard KServe RAW deployment on GPU nodes, no custom CRD or chaining
 
 ### Test Strategy & Risks (3 of 3 resolved)
+
 - ~~No ADR provided for detailed technical design~~ — **Resolved**:
   context document provides CUDA EP configuration details (baked into
   image at build time), supported GPU hardware info, and full template
@@ -39,6 +41,7 @@ The following gaps were resolved by the context document
   single-model, ONNX v1, probes, security context, resource defaults)
 
 ### Environment & Infrastructure (8 of 8 resolved)
+
 - ~~OpenShift version requirement not specified~~ — **Resolved**: minimum
   4.20
 - ~~RHOAI exact target version not confirmed~~ — **Resolved**: 3.5 GA
@@ -59,6 +62,7 @@ The following gaps were resolved by the context document
   not in scope; REST/HTTP V2 only on port 8080
 
 ### Test Case Coverage (3 of 4 resolved)
+
 - ~~No test cases for dynamic batching behavior~~ — **Resolved**: dynamic
   batching out of scope for this release
 - ~~No test cases for gRPC inference~~ — **Resolved**: gRPC out of scope

@@ -15,26 +15,33 @@ serving as the baseline for GPU numerical consistency comparison
 (TC-INFER-002).
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA installed
 - CPU InferenceService `resnet-cpu` deployed and Ready
   (TC-COMPAT-001)
 - Same ONNX model and reference input used in TC-INFER-001
 
 **Test Steps**:
+
 1. Obtain the InferenceService URL:
+
    ```bash
    URL=$(oc get inferenceservice resnet-cpu \
      -o jsonpath='{.status.url}')
    ```
+
 2. Send the reference inference request:
+
    ```bash
    curl -s -X POST "${URL}/v2/models/resnet-cpu/infer" \
      -H "Content-Type: application/json" \
      -d @resnet-input.json
    ```
+
 3. Verify the predicted class matches the known expected output.
 
 **Expected Results**:
+
 - Response HTTP status code is `200`
 - Response body contains `"model_name": "resnet-cpu"` and an
   `"outputs"` array

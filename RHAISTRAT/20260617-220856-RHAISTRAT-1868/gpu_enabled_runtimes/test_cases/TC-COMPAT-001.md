@@ -15,13 +15,16 @@ inference requests via KServe V2 protocol, confirming backwards
 compatibility after GPU runtime addition.
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA installed
 - `mlserver-onnx` ClusterServingRuntime present on the cluster
 - ResNet-50 ONNX model available in S3-compatible storage
 - `namespace-admin` access
 
 **Test Steps**:
+
 1. Deploy an InferenceService using the CPU runtime:
+
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: serving.kserve.io/v1beta1
@@ -40,12 +43,16 @@ compatibility after GPU runtime addition.
          storageUri: s3://models/resnet-50-onnx/
    EOF
    ```
+
 2. Wait for the InferenceService to reach `Ready`:
+
    ```bash
    oc wait inferenceservice/resnet-cpu --for=condition=Ready \
      --timeout=300s
    ```
+
 3. Send an inference request to the CPU endpoint:
+
    ```bash
    URL=$(oc get inferenceservice resnet-cpu \
      -o jsonpath='{.status.url}')
@@ -53,9 +60,11 @@ compatibility after GPU runtime addition.
      -H "Content-Type: application/json" \
      -d @resnet-input.json
    ```
+
 4. Verify the response contains a valid prediction.
 
 **Expected Results**:
+
 - InferenceService reaches `Ready` condition within 300 seconds
 - Predictor pod is in `Running` state
 - Inference response returns HTTP `200` with a valid KServe V2

@@ -98,6 +98,7 @@ error: null
 | 2026-07-17 | 1.0 | Initial assessment |
 
 ### Cycle 1 Revision
+
 - **Specificity**: N/A -- scored 2
 - **Grounding**: Added transparency notes to probe entries in Section 4 indicating they are sourced from context document's ServingRuntime template specification
 - **Scope Fidelity**: N/A -- scored 2
@@ -107,4 +108,3 @@ error: null
 | Cycle | Action | Score | Notes |
 |-------|--------|-------|-------|
 | 1 | Re-assessment after Cycle 1 revision | 9/10 | Consistency improved from 1 to 2. Grounding remains at 1 due to unsourced runtime version, HardwareProfile ranges, and container defaults. Overall verdict: Ready. |
-

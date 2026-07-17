@@ -16,6 +16,7 @@ ONNX model pre-staged to in-cluster storage, confirming full
 air-gapped GPU support.
 
 **Preconditions**:
+
 - Disconnected OCP 4.20+ cluster with GPU nodes (NVIDIA GPU
   Operator 12.9+)
 - MLServer CUDA image (`$(mlserver-cuda-image)`) mirrored to
@@ -28,19 +29,25 @@ air-gapped GPU support.
   `infrastructure.opendatahub.io/v1`) applied
 
 **Test Steps**:
+
 1. Mirror the CUDA image to the disconnected registry:
+
    ```bash
    skopeo copy \
      docker://<source-registry>/mlserver-cuda@sha256:<digest> \
      docker://<disconnected-registry>/mlserver-cuda@sha256:<digest>
    ```
+
 2. Verify the mirrored image is accessible:
+
    ```bash
    oc image info \
      <disconnected-registry>/mlserver-cuda@sha256:<digest>
    ```
+
 3. Verify the ONNX model is pre-staged to in-cluster storage.
 4. Deploy an InferenceService using the GPU runtime:
+
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: serving.kserve.io/v1beta1
@@ -59,23 +66,31 @@ air-gapped GPU support.
          storageUri: s3://models/resnet-50-onnx/
    EOF
    ```
+
 5. Wait for the InferenceService to reach `Ready`:
+
    ```bash
    oc wait inferenceservice/resnet-gpu --for=condition=Ready \
      --timeout=300s
    ```
+
 6. Verify the image was pulled from the disconnected registry:
+
    ```bash
    oc get pod \
      -l serving.kserve.io/inferenceservice=resnet-gpu \
      -o jsonpath='{.items[0].status.containerStatuses[?(@.name=="kserve-container")].imageID}'
    ```
+
 7. Verify no external registry pull attempts occurred:
+
    ```bash
    oc get events --field-selector reason=Pulling \
      | grep -v "<disconnected-registry>"
    ```
+
 8. Send a V2 inference request:
+
    ```bash
    URL=$(oc get inferenceservice resnet-gpu \
      -o jsonpath='{.status.url}')
@@ -85,6 +100,7 @@ air-gapped GPU support.
    ```
 
 **Expected Results**:
+
 - GPU InferenceService reaches `Ready` state in the disconnected
   environment
 - Pod `kserve-container` imageID references the disconnected registry

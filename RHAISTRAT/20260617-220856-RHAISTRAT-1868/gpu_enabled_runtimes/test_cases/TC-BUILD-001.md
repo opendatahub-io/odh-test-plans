@@ -15,11 +15,14 @@ container image references using digest format, ensuring OLM can
 mirror both images for disconnected deployments.
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA installed
 - RHOAI operator CSV accessible in `openshift-operators` namespace
 
 **Test Steps**:
+
 1. Retrieve the CSV for the RHOAI operator:
+
    ```bash
    CSV=$(oc get csv -n openshift-operators \
      -l operators.coreos.com/rhods-operator.openshift-operators \
@@ -27,20 +30,26 @@ mirror both images for disconnected deployments.
    oc get csv "$CSV" -n openshift-operators \
      -o jsonpath='{.spec.relatedImages}' | jq .
    ```
+
 2. Verify a CPU MLServer image entry exists in `relatedImages`:
+
    ```bash
    oc get csv "$CSV" -n openshift-operators \
      -o jsonpath='{.spec.relatedImages}' \
      | jq '.[] | select(.name | contains("mlserver"))'
    ```
+
 3. Verify a GPU MLServer CUDA image entry exists in `relatedImages`
    referencing `$(mlserver-cuda-image)`:
+
    ```bash
    oc get csv "$CSV" -n openshift-operators \
      -o jsonpath='{.spec.relatedImages}' \
      | jq '.[] | select(.name | contains("mlserver-cuda"))'
    ```
+
 4. Confirm both entries use image digests (not tags):
+
    ```bash
    oc get csv "$CSV" -n openshift-operators \
      -o jsonpath='{.spec.relatedImages}' \
@@ -49,6 +58,7 @@ mirror both images for disconnected deployments.
    ```
 
 **Expected Results**:
+
 - `relatedImages` contains at least two entries with names referencing
   MLServer — one for CPU, one for GPU (CUDA)
 - Both image references use `@sha256:` digest format (not `:tag`)

@@ -14,6 +14,7 @@ inference results when sending a prediction request to the KServe V2
 `/v2/models/{model}/infer` endpoint on port 8080.
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA and NVIDIA GPU Operator 12.9+
 - InferenceService `resnet-gpu` deployed with `mlserver-cuda-runtime`
   and Ready (TC-DEPLOY-002)
@@ -21,23 +22,29 @@ inference results when sending a prediction request to the KServe V2
   known expected outputs for a reference input image
 
 **Test Steps**:
+
 1. Obtain the InferenceService URL:
+
    ```bash
    URL=$(oc get inferenceservice resnet-gpu \
      -o jsonpath='{.status.url}')
    ```
+
 2. Send an inference request with a known input:
+
    ```bash
    curl -s -X POST "${URL}/v2/models/resnet-gpu/infer" \
      -H "Content-Type: application/json" \
      -d @resnet-input.json
    ```
+
 3. Parse the response and verify the predicted class matches the
    known expected output for the reference input.
 4. Verify the response conforms to KServe V2 inference protocol
    structure.
 
 **Expected Results**:
+
 - Response HTTP status code is `200`
 - Response body contains `"model_name": "resnet-gpu"` and an
   `"outputs"` array
@@ -47,6 +54,7 @@ inference results when sending a prediction request to the KServe V2
 - Response includes `"id"` field matching the request ID
 
 **Test Data**:
+
 ```json
 {
   "id": "infer-001",
@@ -62,6 +70,7 @@ inference results when sending a prediction request to the KServe V2
 ```
 
 **Expected Response**:
+
 ```json
 {
   "id": "infer-001",

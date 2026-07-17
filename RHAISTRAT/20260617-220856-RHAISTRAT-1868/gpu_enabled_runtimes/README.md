@@ -23,12 +23,14 @@ ClusterServingRuntime template.
 ## Test Implementation
 
 Automated tests will be implemented in:
+
 - `opendatahub-tests` repository for E2E and integration tests
 - Component-level tests in `odh-model-controller` for template validation
 
 ## Changelog
 
 ### v1.2.0 (2026-07-17)
+
 - Updated with RHAISTRAT-1868-context.md
 - Corrected runtime name from `mlserver-onnx-gpu` to
   `mlserver-cuda-runtime`

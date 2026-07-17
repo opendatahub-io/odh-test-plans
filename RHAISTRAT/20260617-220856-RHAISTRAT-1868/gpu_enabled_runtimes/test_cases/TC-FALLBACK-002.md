@@ -14,6 +14,7 @@ cluster where no nodes have NVIDIA GPU resources results in the pod
 remaining in Pending state.
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA
 - `mlserver-cuda-runtime` ClusterServingRuntime applied in
   `redhat-ods-applications` namespace
@@ -24,13 +25,17 @@ remaining in Pending state.
   cordoned)
 
 **Test Steps**:
+
 1. Confirm no nodes have allocatable GPU resources (or cordon GPU
    nodes):
+
    ```bash
    oc get nodes -o custom-columns=\
      "NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu"
    ```
+
 2. Deploy InferenceService with GPU runtime and HardwareProfile:
+
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: serving.kserve.io/v1beta1
@@ -49,19 +54,24 @@ remaining in Pending state.
          storageUri: s3://models/resnet-50-onnx/
    EOF
    ```
+
 3. Wait 60 seconds and check pod status:
+
    ```bash
    oc get pod \
      -l serving.kserve.io/inferenceservice=resnet-gpu-nogpu \
      -o jsonpath='{.items[0].status.phase}'
    ```
+
 4. Inspect scheduling events:
+
    ```bash
    oc get events --field-selector \
      reason=FailedScheduling --sort-by='.lastTimestamp'
    ```
 
 **Expected Results**:
+
 - Pod status is `Pending`
 - Events contain a `FailedScheduling` event referencing insufficient
   `nvidia.com/gpu` resources

@@ -14,23 +14,29 @@ endpoint returns a ready status for a model loaded on the existing
 CPU `mlserver-onnx` runtime.
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA installed
 - CPU InferenceService `resnet-cpu` deployed and Ready
   (TC-COMPAT-001)
 
 **Test Steps**:
+
 1. Obtain the InferenceService URL:
+
    ```bash
    URL=$(oc get inferenceservice resnet-cpu \
      -o jsonpath='{.status.url}')
    ```
+
 2. Query the model readiness endpoint:
+
    ```bash
    curl -s -o /dev/null -w "%{http_code}" \
      "${URL}/v2/models/resnet-cpu/ready"
    ```
 
 **Expected Results**:
+
 - Response HTTP status code is `200`
 - Response body indicates the model is ready
 

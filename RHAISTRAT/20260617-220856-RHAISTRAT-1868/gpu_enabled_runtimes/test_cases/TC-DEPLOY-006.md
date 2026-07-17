@@ -16,6 +16,7 @@ inference pod, without hardcoded resource limits in the
 ServingRuntime template.
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA and NVIDIA GPU Operator 12.9+
 - `mlserver-cuda-runtime` ClusterServingRuntime applied in
   `redhat-ods-applications` namespace (TC-DEPLOY-001)
@@ -28,13 +29,17 @@ ServingRuntime template.
 - GPU node available in the cluster
 
 **Test Steps**:
+
 1. Verify the `mlserver-cuda-runtime` ClusterServingRuntime does not
    contain hardcoded `nvidia.com/gpu` resource limits:
+
    ```bash
    oc get clusterservingruntime mlserver-cuda-runtime -o yaml \
      | grep -A5 "resources"
    ```
+
 2. Deploy an InferenceService with the GPU HardwareProfile:
+
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: serving.kserve.io/v1beta1
@@ -53,14 +58,18 @@ ServingRuntime template.
          storageUri: s3://models/resnet-50-onnx/
    EOF
    ```
+
 3. Verify the resulting pod has GPU resources injected by the
    HardwareProfile:
+
    ```bash
    oc get pod -l serving.kserve.io/inferenceservice=resnet-gpu-hp \
      -o jsonpath='{.items[0].spec.containers[?(@.name=="kserve-container")].resources}'
    ```
+
 4. Confirm the pod is scheduled on a node with `nvidia.com/gpu`
    allocatable capacity:
+
    ```bash
    NODE=$(oc get pod \
      -l serving.kserve.io/inferenceservice=resnet-gpu-hp \
@@ -70,6 +79,7 @@ ServingRuntime template.
    ```
 
 **Expected Results**:
+
 - ClusterServingRuntime YAML does not contain hardcoded
   `nvidia.com/gpu` resource limits in the container spec
 - Pod resource limits include `nvidia.com/gpu: 1` injected by the

@@ -13,6 +13,7 @@ version: 1.2.0
 reviewers: []
 ---
 # GPU Enabled Runtimes Test Plan
+
 **Model Runtimes – GPU-Accelerated Inference for Predictive ML**
 
 **Strategy**: [RHAISTRAT-1868](https://issues.redhat.com/browse/RHAISTRAT-1868)
@@ -42,6 +43,7 @@ installation through GPU inference under load.
 ### 1.2 Scope
 
 #### In Scope (Model Runtimes Responsibilities)
+
 - GPU MLServer container image build on `aipcc/cuda` base with
   `onnxruntime-gpu` and CUDA execution provider
 - New `mlserver-cuda-runtime-template` in `redhat-ods-applications`
@@ -62,7 +64,7 @@ installation through GPU inference under load.
 - ONNX format version 1 support
 - `kustomization.yaml` update with new GPU runtime template
 - Air-gapped deployment validation for GPU runtime (mirrored GPU image
-  + pre-staged model)
+  - pre-staged model)
 - Standard KServe RAW deployment on GPU nodes (standard Kubernetes
   scheduling)
 - Security context: non-root, all capabilities dropped, privilege
@@ -70,6 +72,7 @@ installation through GPU inference under load.
 - Startup, readiness, and liveness probes per template spec
 
 #### Out of Scope (Other Teams or Explicitly Excluded)
+
 - OVMS NVIDIA CUDA support (deprecated as of RHOAI 2.25)
 - Dashboard UI code changes (annotation-driven discovery is automatic)
 - Platform/Operator team changes (HardwareProfile is GA and generic)
@@ -120,6 +123,7 @@ installation through GPU inference under load.
 ## 2. Test Strategy
 
 ### 2.1 Test Levels
+
 - **API Integration Testing** — Verify GPU ServingRuntime template
   deployment via odh-model-controller, KServe inference endpoint
   availability, and model serving API responses when using
@@ -145,6 +149,7 @@ installation through GPU inference under load.
   confirm RBAC enforcement on ServingRuntime resources
 
 ### 2.2 Test Types
+
 - **Positive Testing** — Deploy GPU runtime with correct HardwareProfile,
   run inference with supported ONNX models, verify CUDA execution
   provider activation, confirm Dashboard discovery of GPU runtime
@@ -160,6 +165,7 @@ installation through GPU inference under load.
   confirm no behavioral changes to existing model serving workflows
 
 ### 2.3 Test Priorities
+
 - **P0 (Critical)** — GPU inference produces correct results; GPU runtime
   deploys successfully with HardwareProfile-based GPU allocation; CPU
   runtime remains unaffected (backwards compatibility); GPU template
@@ -180,6 +186,7 @@ installation through GPU inference under load.
 ## 3. Test Environment
 
 ### 3.1 Test Cluster Configuration
+
 - **OpenShift version**: 4.20+ (minimum supported)
 - **RHOAI version**: 3.5 GA
 - **NVIDIA GPU Operator**: 12.9+ (minimum supported; no ClusterPolicy
@@ -205,6 +212,7 @@ installation through GPU inference under load.
   template is present)
 
 ### 3.2 Test Data Requirements
+
 - **ServingRuntime templates**:
   - CPU: existing `mlserver-onnx` in
     `odh-model-controller/config/runtimes/`
@@ -233,6 +241,7 @@ installation through GPU inference under load.
   `/v2/models/{model}/infer`
 
 ### 3.3 Test Users
+
 - **cluster-admin**: For installing operators, creating
   ClusterServingRuntimes, and managing cluster-scoped resources
 - **namespace-admin**: For creating InferenceServices, HardwareProfiles,
@@ -464,6 +473,7 @@ KServe/odh-model-controller RBAC patterns. Testing considerations:
 ## 9. Test Environment Requirements
 
 ### 9.1 Infrastructure
+
 - GPU-enabled OpenShift 4.20+ cluster with at least one NVIDIA GPU node
   (any modern NVIDIA GPU compatible with GPU Operator 12.9+, no SKU
   restrictions)
@@ -480,6 +490,7 @@ KServe/odh-model-controller RBAC patterns. Testing considerations:
   images and `aipcc/cuda` base image
 
 ### 9.2 Configuration
+
 - **OpenShift version**: 4.20+ (confirmed)
 - **RHOAI version**: 3.5 GA (confirmed)
 - **NVIDIA GPU Operator**: 12.9+ (confirmed)
@@ -519,6 +530,7 @@ KServe/odh-model-controller RBAC patterns. Testing considerations:
 - **Container resource defaults**: CPU 1-4, Memory 4Gi-8Gi
 
 ### 9.3 Test Tools
+
 - `oc` / `kubectl` — CRD management, pod inspection, resource
   allocation verification, HardwareProfile validation
 - `curl` / `httpie` — KServe V2 REST inference requests to

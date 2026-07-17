@@ -16,6 +16,7 @@ upgrade_phase: post
 GPU acceleration options when selecting this runtime.
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA installed
 - `mlserver-cuda-runtime` ClusterServingRuntime applied in
   `redhat-ods-applications` namespace with the
@@ -25,6 +26,7 @@ GPU acceleration options when selecting this runtime.
 - RHOAI Dashboard accessible
 
 **Test Steps**:
+
 1. Log in to the RHOAI Dashboard.
 2. Navigate to model deployment and select the
    `mlserver-cuda-runtime` runtime.
@@ -33,12 +35,14 @@ GPU acceleration options when selecting this runtime.
 4. Verify that selecting the CPU runtime (`mlserver-onnx`) does NOT
    show GPU HardwareProfile recommendations.
 5. Verify the annotation value via CLI:
+
    ```bash
    oc get clusterservingruntime mlserver-cuda-runtime \
      -o jsonpath='{.metadata.annotations.opendatahub\.io/recommended-accelerators}'
    ```
 
 **Expected Results**:
+
 - When the GPU runtime is selected, the Dashboard shows
   `nvidia-gpu-a100` HardwareProfile as a recommended accelerator
 - When the CPU runtime is selected, no GPU HardwareProfiles are

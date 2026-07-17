@@ -14,6 +14,7 @@ remains visible and selectable in the Dashboard after the
 `mlserver-cuda-runtime` is added to the cluster.
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA installed
 - `mlserver-onnx` ClusterServingRuntime present on the cluster
 - `mlserver-cuda-runtime` ClusterServingRuntime applied in
@@ -21,6 +22,7 @@ remains visible and selectable in the Dashboard after the
 - RHOAI Dashboard accessible
 
 **Test Steps**:
+
 1. Log in to the RHOAI Dashboard.
 2. Navigate to the model serving runtime selection.
 3. Verify `mlserver-onnx` (CPU) runtime is listed.
@@ -30,6 +32,7 @@ remains visible and selectable in the Dashboard after the
    without errors.
 
 **Expected Results**:
+
 - The CPU runtime `mlserver-onnx` is listed in the runtime
   selection dropdown
 - Both runtimes appear as separate entries with distinct names

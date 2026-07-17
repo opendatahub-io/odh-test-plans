@@ -15,6 +15,7 @@ validate the performance benefit of GPU acceleration. No pass/fail
 thresholds — baseline establishment only until SLOs are defined.
 
 **Preconditions**:
+
 - OCP 4.20+ cluster with RHOAI 3.5 GA and NVIDIA GPU Operator 12.9+
 - GPU InferenceService `resnet-gpu` deployed with
   `mlserver-cuda-runtime` and Ready (TC-DEPLOY-002)
@@ -23,6 +24,7 @@ thresholds — baseline establishment only until SLOs are defined.
 - Same ResNet-50 ONNX model loaded on both runtimes
 
 **Test Steps**:
+
 1. Run a throughput test against the GPU runtime at 50 concurrent
    requests for 120 seconds. Record total requests completed and
    average latency.
@@ -32,6 +34,7 @@ thresholds — baseline establishment only until SLOs are defined.
 4. Compare average and p95 latencies between runtimes.
 
 **Expected Results**:
+
 - Both runtimes maintain error rates below 1% during the test
 - Throughput and latency metrics are recorded for both GPU and CPU
   runtimes for comparison
