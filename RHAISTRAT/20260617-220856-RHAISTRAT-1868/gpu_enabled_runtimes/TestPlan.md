@@ -332,6 +332,7 @@ framework. The remaining E2E scenarios were redundant with individual
 TCs (TC-E2E-002 ≡ TC-FALLBACK-001, TC-E2E-003 ≡ TC-INFER-002).
 
 E2E coverage is now provided by:
+
 - **TC-DISC-001** (manual): Dashboard GPU runtime discovery
 - **TC-DEPLOY-001 → TC-INFER-001**: Template → ServingRuntime → ISVC
   → inference chain

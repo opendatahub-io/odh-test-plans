@@ -64,7 +64,7 @@ output within 5 minutes after the upgrade completes.
 
 **Test Steps (post-upgrade)**:
 
-4. Verify the ISVC reaches Ready condition within 5 minutes after
+1. Verify the ISVC reaches Ready condition within 5 minutes after
    upgrade completion:
 
    ```python
@@ -80,7 +80,7 @@ output within 5 minutes after the upgrade completes.
    )
    ```
 
-5. Repeat inference and validate the response structure matches
+2. Repeat inference and validate the response structure matches
    expectations:
 
    ```python
@@ -92,7 +92,7 @@ output within 5 minutes after the upgrade completes.
    validate_deterministic_snapshot(response=post_upgrade)
    ```
 
-6. Compare restart counts -- there should be zero additional
+3. Compare restart counts -- there should be zero additional
    restarts on the predictor pod:
 
    ```python
