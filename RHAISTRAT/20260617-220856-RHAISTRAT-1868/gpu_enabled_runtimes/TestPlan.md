@@ -8,8 +8,8 @@ components:
 - Model Runtimes
 additional_docs:
 - RHAISTRAT-1868-context.md
-last_updated: '2026-07-17'
-version: 1.2.0
+last_updated: '2026-07-21'
+version: 1.3.0
 reviewers: []
 ---
 # GPU Enabled Runtimes Test Plan
@@ -52,12 +52,13 @@ installation through GPU inference under load.
   HardwareProfile CR (API group: `infrastructure.opendatahub.io/v1`)
 - Dashboard auto-discovery of GPU runtime via `opendatahub.io/dashboard`
   label
-- CUDA execution provider baked into container image at build time (not
-  user-configurable at deployment time)
+- CUDA execution provider baked into container image at build time
+  (overridable via `MLSERVER_MODEL_ONNX_PROVIDERS` env var or
+  per-model `parameters.extra.providers` in `model-settings.json`)
 - CSV `relatedImages` inclusion of both CPU and GPU image references
 - Backwards compatibility of existing CPU MLServer image and template
-- No-silent-CPU-fallback behavior (pod Pending without GPU
-  HardwareProfile)
+- Silent CPU fallback detection (pod Running on CPU when GPU
+  resources not requested, ORT falls back to CPUExecutionProvider)
 - GPU inference correctness and numerical consistency with CPU results
 - KServe V2 REST protocol only on port 8080 (no gRPC, no V1 protocol)
 - Single-model serving only (multi-model: false)
@@ -103,7 +104,7 @@ installation through GPU inference under load.
    to the serving pod
 3. Confirm that deploying the GPU runtime without a GPU HardwareProfile
    results in pod Pending status (no silent CPU fallback)
-4. Ensure the existing CPU MLServer image and ClusterServingRuntime
+4. Ensure the existing CPU MLServer image and ServingRuntime
    template remain fully functional and unaffected by the GPU additions
 5. Validate KServe V2 inference endpoints (`/v2/models/{model}/infer`,
    `/v2/models/{model}/ready`, `/v2/health/ready`) on port 8080 produce
@@ -161,7 +162,7 @@ installation through GPU inference under load.
   sizes, maximum resolution inputs, multiple simultaneous model
   deployments on shared GPU resources
 - **Regression Testing** — Verify existing CPU MLServer image and
-  ClusterServingRuntime template remain fully functional and unchanged;
+  ServingRuntime template remain fully functional and unchanged;
   confirm no behavioral changes to existing model serving workflows
 
 ### 2.3 Test Priorities
@@ -214,7 +215,7 @@ installation through GPU inference under load.
 ### 3.2 Test Data Requirements
 
 - **ServingRuntime templates**:
-  - CPU: existing `mlserver-onnx` in
+  - CPU: existing `mlserver-runtime` in
     `odh-model-controller/config/runtimes/`
   - GPU: `mlserver-cuda-runtime-template` in
     `redhat-ods-applications` namespace
@@ -243,7 +244,7 @@ installation through GPU inference under load.
 ### 3.3 Test Users
 
 - **cluster-admin**: For installing operators, creating
-  ClusterServingRuntimes, and managing cluster-scoped resources
+  ServingRuntimes, and managing cluster-scoped resources
 - **namespace-admin**: For creating InferenceServices, HardwareProfiles,
   and ServingRuntimes within a project
 - **data-scientist (unprivileged)**: For deploying models via Dashboard UI
@@ -275,7 +276,7 @@ installation through GPU inference under load.
 | Startup probe (exec) | Probe | Checks `/mnt/models` non-empty (1s initial delay, 1s period, 1 failure threshold). _Configuration sourced from context document's ServingRuntime template specification (RHAISTRAT-1868-context.md)._ | P1 |
 | CSV `relatedImages` (CPU + GPU) | Config | OLM image references for both image variants | P1 |
 | `kustomization.yaml` (updated) | Config | Includes new GPU runtime template | P1 |
-| Environment variables | Config | `MLSERVER_MODEL_IMPLEMENTATION`, `MLSERVER_HTTP_PORT: 8080`, `MLSERVER_MODELS_DIR: /mnt/models` | P1 |
+| Environment variables | Config | `MLSERVER_MODEL_IMPLEMENTATION: {{.Labels.modelClass}}` (template variable), `MLSERVER_HTTP_PORT: 8080`, `MLSERVER_MODELS_DIR: /mnt/models`, `MLSERVER_MODEL_ONNX_PROVIDERS` (CUDA image only, overridable) | P1 |
 | Security context | Config | Non-root execution, all capabilities dropped, privilege escalation disallowed | P1 |
 | CUDA execution provider initialization logs | Log | Verify CUDA execution provider loads in GPU pod (baked into image at build time) | P1 |
 
@@ -283,7 +284,10 @@ installation through GPU inference under load.
 
 ## 5. Test Cases
 
-Test cases have been generated — 41 total (19 P0, 17 P1, 5 P2).
+Test cases have been generated — 17 total (8 P0, 8 P1, 1 P2).
+Consolidated from 41 original TCs after PR review feedback
+(redundancy analysis, framework alignment, architectural
+corrections).
 
 **Test Cases Directory**: [test_cases/](test_cases/)
 **Complete Test Case Index**: [test_cases/INDEX.md](test_cases/INDEX.md)
@@ -292,18 +296,16 @@ Test cases have been generated — 41 total (19 P0, 17 P1, 5 P2).
 
 | Category | Test Cases | Priority Distribution |
 |----------|------------|----------------------|
-| TC-DEPLOY | 6 | 5 P0, 1 P1 |
-| TC-INFER | 6 | 3 P0, 3 P1 |
-| TC-COMPAT | 4 | 3 P0, 1 P1 |
-| TC-FALLBACK | 3 | 3 P0 |
-| TC-DISC | 3 | 1 P0, 2 P1 |
-| TC-BUILD | 4 | 4 P1 |
-| TC-PERF | 3 | 3 P2 |
-| TC-AIRGAP | 2 | 2 P2 |
-| TC-RBAC | 3 | 3 P1 |
-| TC-UPGRADE | 4 | 1 P0, 3 P1 |
-| TC-E2E | 3 | 3 P0 |
-| **Total** | **41** | **19 P0, 17 P1, 5 P2** |
+| TC-DEPLOY | 2 | 2 P0 |
+| TC-INFER | 3 | 2 P0, 1 P1 |
+| TC-COMPAT | 2 | 1 P0, 1 P1 |
+| TC-FALLBACK | 2 | 1 P0, 1 P1 |
+| TC-DISC | 1 | 1 P0 |
+| TC-BUILD | 2 | 2 P1 |
+| TC-PERF | 1 | 1 P2 |
+| TC-RBAC | 1 | 1 P1 |
+| TC-UPGRADE | 3 | 2 P0, 1 P1 |
+| **Total** | **17** | **8 P0, 8 P1, 1 P2** |
 
 ### 5.2 Test Case Naming Convention
 
@@ -312,55 +314,46 @@ Test cases follow the naming pattern: `TC-<CATEGORY>-<NUMBER>`
 - `TC-DEPLOY` — GPU runtime deployment and template validation
 - `TC-INFER` — GPU inference correctness and execution provider tests
 - `TC-COMPAT` — CPU backwards compatibility and regression tests
-- `TC-FALLBACK` — Silent CPU fallback prevention tests
-- `TC-DISC` — Dashboard discovery and annotation tests
-- `TC-BUILD` — Konflux/Tekton GPU build pipeline and CSV tests
-- `TC-PERF` — Performance, latency, and scalability tests
-- `TC-AIRGAP` — Air-gapped and disconnected environment tests
+- `TC-FALLBACK` — Silent CPU fallback detection tests
+- `TC-DISC` — Dashboard discovery (manual)
+- `TC-BUILD` — CSV image references and architecture separation
+- `TC-PERF` — Performance baseline tests
 - `TC-RBAC` — RBAC and authorization tests
 - `TC-UPGRADE` — Upgrade and migration tests
-- `TC-E2E` — End-to-end user journey scenarios
 
 ---
 
 ## 6. E2E Test Scenarios
 
-End-to-end scenarios that validate the user journeys defined in the
-strategy. Each scenario maps to one or more TC-E2E-*.md test cases
-generated by `/test-plan-create-cases`.
+Dedicated E2E test cases (TC-E2E-*) were removed during PR review
+consolidation. The Dashboard-driven user journey (TC-E2E-001) required
+browser automation incompatible with the `opendatahub-tests` pytest
+framework. The remaining E2E scenarios were redundant with individual
+TCs (TC-E2E-002 ≡ TC-FALLBACK-001, TC-E2E-003 ≡ TC-INFER-002).
 
-> **Requirement**: At least one E2E scenario MUST be generated for each
-> P0 endpoint in Section 4.
-> E2E scenarios will be filled by `/test-plan-create-cases`.
+E2E coverage is now provided by:
+- **TC-DISC-001** (manual): Dashboard GPU runtime discovery
+- **TC-DEPLOY-001 → TC-INFER-001**: Template → ServingRuntime → ISVC
+  → inference chain
+- **TC-INFER-002**: Cross-validates GPU vs CPU inference results
+- **TC-COMPAT-002**: CPU runtime unaffected after GPU runtime added
 
-### 6.1 Scenario Summary
+### 6.1 E2E Coverage Matrix
 
-| ID | Scenario | Endpoints Covered | Priority |
-|----|----------|-------------------|----------|
-| TC-E2E-001 | Data scientist deploys GPU model via Dashboard and runs inference | GPU ClusterServingRuntime, recommended-accelerators annotation, HardwareProfile CR, GPU image, `/v2/models/{model}/infer` (GPU), `/v2/models/{model}/ready` (GPU) | P0 |
-| TC-E2E-002 | GPU deployment with HardwareProfile and fallback verification | GPU ClusterServingRuntime, HardwareProfile CR, `/v2/models/{model}/infer` (GPU), GPU pod scheduling (no HardwareProfile) | P0 |
-| TC-E2E-003 | Side-by-side CPU and GPU deployment with cross-validation | GPU image, CPU image, `/v2/models/{model}/infer` (GPU), `/v2/models/{model}/infer` (CPU) | P0 |
-
-### 6.2 E2E Coverage Matrix
-
-| Endpoint (from Section 4) | E2E Scenarios |
-|----------------------------|---------------|
-| `mlserver-cuda-runtime-template` | TC-E2E-001, TC-E2E-002 |
-| `opendatahub.io/dashboard: "true"` label | TC-E2E-001 |
-| `opendatahub.io/recommended-accelerators` annotation | TC-E2E-001 |
-| `model-settings.json` (GPU variant) | — |
-| HardwareProfile CR for `nvidia.com/gpu` | TC-E2E-001, TC-E2E-002 |
-| CSV `relatedImages` (CPU + GPU) | — |
-| GPU MLServer container image | TC-E2E-001, TC-E2E-003 |
-| CPU MLServer container image (existing) | TC-E2E-003 |
-| `kustomization.yaml` (updated) | — |
-| KServe V2 `/v2/models/{model}/infer` (GPU) | TC-E2E-001, TC-E2E-002, TC-E2E-003 |
-| KServe V2 `/v2/models/{model}/ready` (GPU) | TC-E2E-001 |
-| KServe V2 `/v2/health/ready` (GPU) | — |
-| KServe V2 `/v2/models/{model}/infer` (CPU) | TC-E2E-003 |
-| KServe V2 `/v2/models/{model}/ready` (CPU) | — |
-| Readiness probe (HTTP) | TC-E2E-001, TC-E2E-002 |
-| Liveness probe (HTTP) | TC-E2E-001, TC-E2E-002 |
+| Endpoint (from Section 4) | Covering TCs |
+|----------------------------|-------------|
+| `mlserver-cuda-runtime-template` | TC-DEPLOY-001, TC-UPGRADE-001 |
+| `opendatahub.io/dashboard: "true"` label | TC-DEPLOY-001, TC-DISC-001 |
+| `opendatahub.io/recommended-accelerators` annotation | TC-DEPLOY-001, TC-DISC-001 |
+| HardwareProfile CR for `nvidia.com/gpu` | TC-DISC-001 (manual) |
+| CSV `relatedImages` (CPU + GPU) | TC-BUILD-001 |
+| GPU MLServer container image | TC-BUILD-002, TC-DEPLOY-002 |
+| CPU MLServer container image (existing) | TC-BUILD-002, TC-COMPAT-001 |
+| KServe V2 `/v2/models/{model}/infer` (GPU) | TC-INFER-001, TC-INFER-002 |
+| KServe V2 `/v2/models/{model}/ready` (GPU) | TC-INFER-001 |
+| KServe V2 `/v2/health/ready` (GPU) | TC-INFER-001 |
+| KServe V2 `/v2/models/{model}/infer` (CPU) | TC-COMPAT-001, TC-INFER-002 |
+| KServe V2 `/v2/models/{model}/ready` (CPU) | TC-COMPAT-001 |
 | GPU pod scheduling behavior (no GPU HardwareProfile) | TC-E2E-002 |
 | CUDA execution provider initialization logs | — |
 
@@ -499,7 +492,7 @@ KServe/odh-model-controller RBAC patterns. Testing considerations:
 - **Runtime name**: `mlserver-cuda-runtime`
 - **HardwareProfile CRD**: `infrastructure.opendatahub.io/v1` API group
 - **ServingRuntime templates**:
-  - CPU: existing `mlserver-onnx` in
+  - CPU: existing `mlserver-runtime` in
     `odh-model-controller/config/runtimes/`
   - GPU: `mlserver-cuda-runtime-template` in
     `redhat-ods-applications` namespace
@@ -523,16 +516,25 @@ KServe/odh-model-controller RBAC patterns. Testing considerations:
   - Readiness: HTTP GET `/v2/models/{model}/ready` port 8080 (5s
     initial delay, 5s period, 3 failure threshold, 5s timeout)
   - Liveness: HTTP GET `/v2/models/{model}/ready` port 8080 (20s
-    initial delay, 10s period, 10 failure threshold, 5s timeout)
-- **Environment variables**: `MLSERVER_MODEL_IMPLEMENTATION`,
-  `MLSERVER_HTTP_PORT: 8080`, `MLSERVER_MODELS_DIR: /mnt/models`
+    initial delay, 10s period, failureThreshold: 10 GPU / 6 CPU,
+    5s timeout)
+- **Environment variables**: `MLSERVER_MODEL_IMPLEMENTATION:
+  {{.Labels.modelClass}}` (template variable, resolved at
+  instantiation), `MLSERVER_HTTP_PORT: 8080`,
+  `MLSERVER_MODELS_DIR: /mnt/models`,
+  `MLSERVER_MODEL_ONNX_PROVIDERS` (CUDA image only, overridable)
 - **Tolerations**: `nvidia.com/gpu` operator Exists, effect NoSchedule
-- **Container resource defaults**: CPU 1-4, Memory 4Gi-8Gi
+- **Container resource defaults**: GPU runtime: CPU 1-4, Memory
+  4Gi-8Gi; CPU runtime: CPU 500m-2, Memory 1Gi-4Gi (values differ
+  between runtimes)
 
 ### 9.3 Test Tools
 
-- `oc` / `kubectl` — CRD management, pod inspection, resource
-  allocation verification, HardwareProfile validation
+- `ocp-resources` Python library — CRD management, pod inspection,
+  resource allocation verification (preferred over raw `oc` commands)
+- `opendatahub-tests` fixtures — `ServingRuntimeFromTemplate`,
+  `create_isvc`, `get_exposed_isvc_url`, `send_rest_request`,
+  `validate_deterministic_snapshot`, `unprivileged_client`
 - `curl` / `httpie` — KServe V2 REST inference requests to
   `/v2/models/{model}/infer`, `/v2/models/{model}/ready`,
   `/v2/health/ready`
@@ -556,49 +558,47 @@ KServe/odh-model-controller RBAC patterns. Testing considerations:
 
 | Category | Total | P0 | P1 | P2 |
 |----------|-------|----|----|-----|
-| TC-DEPLOY | 6 | 5 | 1 | 0 |
-| TC-INFER | 6 | 3 | 3 | 0 |
-| TC-COMPAT | 4 | 3 | 1 | 0 |
-| TC-FALLBACK | 3 | 3 | 0 | 0 |
-| TC-DISC | 3 | 1 | 2 | 0 |
-| TC-BUILD | 4 | 0 | 4 | 0 |
-| TC-PERF | 3 | 0 | 0 | 3 |
-| TC-AIRGAP | 2 | 0 | 0 | 2 |
-| TC-RBAC | 3 | 0 | 3 | 0 |
-| TC-UPGRADE | 4 | 1 | 3 | 0 |
-| TC-E2E | 3 | 3 | 0 | 0 |
-| **Total** | **41** | **19** | **17** | **5** |
+| TC-DEPLOY | 2 | 2 | 0 | 0 |
+| TC-INFER | 3 | 2 | 1 | 0 |
+| TC-COMPAT | 2 | 1 | 1 | 0 |
+| TC-FALLBACK | 2 | 1 | 1 | 0 |
+| TC-DISC | 1 | 1 | 0 | 0 |
+| TC-BUILD | 2 | 0 | 2 | 0 |
+| TC-PERF | 1 | 0 | 0 | 1 |
+| TC-RBAC | 1 | 0 | 1 | 0 |
+| TC-UPGRADE | 3 | 2 | 1 | 0 |
+| **Total** | **17** | **8** | **8** | **1** |
 
 ### 10.2 Component Coverage
 
 | Component / Config | Test Cases | Coverage |
 |--------------------|------------|----------|
-| `mlserver-cuda-runtime-template` | TC-DEPLOY-001, TC-DEPLOY-002, TC-E2E-001, TC-E2E-002 | |
-| `opendatahub.io/dashboard: "true"` label | TC-DEPLOY-001, TC-DISC-001, TC-E2E-001 | |
-| `opendatahub.io/recommended-accelerators` annotation | TC-DEPLOY-005, TC-DISC-002, TC-RBAC-003, TC-E2E-001 | |
-| `model-settings.json` (GPU variant) | TC-INFER-005 | |
-| HardwareProfile CR for `nvidia.com/gpu` | TC-DEPLOY-002, TC-DEPLOY-006, TC-E2E-001, TC-E2E-002 | |
+| `mlserver-cuda-runtime-template` | TC-DEPLOY-001, TC-DEPLOY-002, TC-UPGRADE-001 | |
+| `opendatahub.io/dashboard: "true"` label | TC-DEPLOY-001, TC-DISC-001 | |
+| `opendatahub.io/recommended-accelerators` annotation | TC-DEPLOY-001, TC-DISC-001 | |
+| HardwareProfile CR for `nvidia.com/gpu` | TC-DISC-001 (manual) | |
 | CSV `relatedImages` (CPU + GPU) | TC-BUILD-001 | |
-| GPU MLServer container image | TC-DEPLOY-003, TC-E2E-001, TC-E2E-003 | |
-| CPU MLServer container image (existing) | TC-COMPAT-001, TC-BUILD-003, TC-E2E-003 | |
-| `kustomization.yaml` (updated) | TC-DEPLOY-004, TC-UPGRADE-004 | |
-| KServe V2 `/v2/models/{model}/infer` (GPU) | TC-INFER-001, TC-INFER-002, TC-INFER-006, TC-E2E-001, TC-E2E-002, TC-E2E-003 | |
-| KServe V2 `/v2/models/{model}/ready` (GPU) | TC-INFER-003, TC-E2E-001 | |
-| KServe V2 `/v2/health/ready` (GPU) | TC-INFER-004 | |
-| KServe V2 `/v2/models/{model}/infer` (CPU) | TC-COMPAT-001, TC-COMPAT-003, TC-INFER-002, TC-E2E-003 | |
-| KServe V2 `/v2/models/{model}/ready` (CPU) | TC-COMPAT-002 | |
-| GPU pod scheduling behavior (no GPU HardwareProfile) | TC-FALLBACK-001, TC-FALLBACK-002, TC-FALLBACK-003, TC-E2E-002 | |
-| Readiness probe (HTTP) | TC-INFER-003, TC-E2E-001, TC-E2E-002 | |
-| Liveness probe (HTTP) | TC-E2E-001, TC-E2E-002 | |
-| Startup probe (exec) | TC-DEPLOY-003 | |
+| GPU MLServer container image | TC-BUILD-001, TC-BUILD-002, TC-DEPLOY-002 | |
+| CPU MLServer container image (existing) | TC-BUILD-002, TC-COMPAT-001 | |
+| KServe V2 `/v2/models/{model}/infer` (GPU) | TC-INFER-001, TC-INFER-002, TC-INFER-003 | |
+| KServe V2 `/v2/models/{model}/ready` (GPU) | TC-INFER-001 | |
+| KServe V2 `/v2/health/ready` (GPU) | TC-INFER-001 | |
+| KServe V2 `/v2/models/{model}/infer` (CPU) | TC-COMPAT-001, TC-INFER-002 | |
+| KServe V2 `/v2/models/{model}/ready` (CPU) | TC-COMPAT-001 | |
+| GPU pod scheduling (silent CPU fallback) | TC-FALLBACK-001 | |
+| GPU pod scheduling (no GPU nodes) | TC-FALLBACK-002 | |
+| Readiness probe (HTTP) | TC-INFER-001 | |
 | Environment variables | TC-DEPLOY-001 | |
 | Security context | TC-DEPLOY-001 | |
-| CUDA execution provider initialization logs | TC-DEPLOY-003, TC-INFER-005 | |
+| CUDA EP initialization logs | TC-DEPLOY-002, TC-FALLBACK-001 | |
+| RBAC (namespace boundary) | TC-RBAC-001 | |
+| Upgrade resilience | TC-UPGRADE-001, TC-UPGRADE-002, TC-UPGRADE-003 | |
 
 ### 10.3 Document Change Log
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.3.0 | 2026-07-21 | PR review feedback: consolidated 41→17 TCs, corrected ServingRuntime kind, CPU runtime name, CSV namespace, CUDA EP configurability, template variable, silent CPU fallback, opendatahub-tests framework alignment |
 | 1.2.0 | 2026-07-17 | Updated with RHAISTRAT-1868-context.md; corrected runtime name to mlserver-cuda-runtime; added HardwareProfile specs, probe timings, security context; regenerated 41 test cases |
 | 1.0.0 | 2026-06-17 | Initial test plan |
 

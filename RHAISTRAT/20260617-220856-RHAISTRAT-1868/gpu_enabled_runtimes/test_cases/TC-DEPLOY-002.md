@@ -4,98 +4,105 @@ source_key: RHAISTRAT-1868
 priority: P0
 status: Draft
 automation_status: Not Started
-last_updated: "2026-07-17"
+last_updated: "2026-07-21"
 upgrade_phase: post
 ---
-# TC-DEPLOY-002: Deploy InferenceService with GPU runtime and HardwareProfile
+# TC-DEPLOY-002: Deploy GPU InferenceService and verify pod initialization
 
-**Objective**: Verify that deploying an InferenceService using the
-`mlserver-cuda-runtime` with the `nvidia-gpu-a100` HardwareProfile
-results in a running pod scheduled on an NVIDIA GPU node with correct
-resource allocation and tolerations.
+**Objective**: Verify that deploying an InferenceService using
+`create_isvc` with `gpu_count=1` results in a running pod
+scheduled on an NVIDIA GPU node with correct resource allocation,
+CUDA execution provider initialization, and GPU device
+accessibility.
 
 **Preconditions**:
 
-- OCP 4.20+ cluster with RHOAI 3.5 GA and NVIDIA GPU Operator 12.9+
-- `mlserver-cuda-runtime` ClusterServingRuntime applied in
-  `redhat-ods-applications` namespace (TC-DEPLOY-001)
-- HardwareProfile `nvidia-gpu-a100` (API group
-  `infrastructure.opendatahub.io/v1`) created
+- OCP 4.20+ cluster with RHOAI 3.5 GA and NVIDIA GPU Operator
+  12.9+
+- `mlserver-cuda-runtime` ServingRuntime applied
+  (TC-DEPLOY-001)
 - At least one worker node with NVIDIA GPU hardware
 - ResNet-50 ONNX model available in S3-compatible storage
-- `namespace-admin` access in the test namespace
+- Must run as `namespace-admin` (not cluster-admin)
+
+**Markers**:
+
+```python
+pytestmark = pytest.mark.usefixtures("valid_aws_config")
+
+@pytest.mark.model_server_gpu
+@skip_if_no_supported_accelerator_type
+```
 
 **Test Steps**:
 
-1. Verify the HardwareProfile CR exists with correct API group:
+1. Create an InferenceService with GPU resources. Note that
+   `create_isvc` automatically sets `nvidia.com/gpu` in resources
+   and attaches volumes (`shared-memory`/`/dev/shm`,
+   `tmp`/`/tmp`, `home`/`/home/mlserver`):
 
-   ```bash
-   oc get hardwareprofile nvidia-gpu-a100 \
-     -o jsonpath='{.apiVersion}'
+   ```python
+   isvc = create_isvc(
+       runtime=ModelInferenceRuntime.MLSERVER_CUDA_RUNTIME,
+       gpu_count=1,
+       external_route=True,
+   )
+   # The fixture handles waiting for Ready
    ```
 
-2. Create an InferenceService referencing the `mlserver-cuda-runtime`
-   and the GPU HardwareProfile:
+2. Retrieve the predictor pod and verify it is running on a GPU
+   node:
 
-   ```bash
-   cat <<EOF | oc apply -f -
-   apiVersion: serving.kserve.io/v1beta1
-   kind: InferenceService
-   metadata:
-     name: resnet-gpu
-     annotations:
-       serving.kserve.io/deploymentMode: RawDeployment
-   spec:
-     predictor:
-       model:
-         modelFormat:
-           name: onnx
-           version: "1"
-         runtime: mlserver-cuda-runtime
-         storageUri: s3://models/resnet-50-onnx/
-   EOF
+   ```python
+   pods = get_pods_by_isvc_label(client, isvc)
+   pod = pods[0]
+   node_name = pod.instance.spec.nodeName
+   assert node_name is not None
    ```
 
-3. Wait for the InferenceService to reach `Ready` state:
+3. Verify the pod has `nvidia.com/gpu` resource limit of `"1"`:
 
-   ```bash
-   oc wait inferenceservice/resnet-gpu --for=condition=Ready \
-     --timeout=300s
+   ```python
+   resources = pod.instance.spec.containers[0].resources
+   gpu_limit = resources.limits["nvidia.com/gpu"]
+   assert gpu_limit == "1"
    ```
 
-4. Verify the predictor pod is running on a GPU node:
+4. Verify `CUDAExecutionProvider` appears in container logs and
+   is listed first (before `CPUExecutionProvider` fallback).
+   Absorbed from old TC-DEPLOY-003:
 
-   ```bash
-   NODE=$(oc get pod \
-     -l serving.kserve.io/inferenceservice=resnet-gpu \
-     -o jsonpath='{.items[0].spec.nodeName}')
-   oc get node "$NODE" \
-     -o jsonpath='{.status.allocatable.nvidia\.com/gpu}'
+   ```python
+   logs = pod.log(container=Containers.KSERVE_CONTAINER_NAME)
+   cuda_pos = logs.index("CUDAExecutionProvider")
+   cpu_pos = logs.index("CPUExecutionProvider")
+   assert cuda_pos < cpu_pos
    ```
 
-5. Confirm the pod has `nvidia.com/gpu` resource allocated:
+5. Execute a command inside the container to confirm GPU device
+   is accessible. Absorbed from old TC-INFER-005:
 
-   ```bash
-   oc get pod -l serving.kserve.io/inferenceservice=resnet-gpu \
-     -o jsonpath='{.items[0].spec.containers[?(@.name=="kserve-container")].resources}'
-   ```
-
-6. Verify the toleration for GPU-tainted nodes is applied:
-
-   ```bash
-   oc get pod -l serving.kserve.io/inferenceservice=resnet-gpu \
-     -o jsonpath='{.items[0].spec.tolerations}' | jq .
+   ```python
+   result = pod.execute(
+       command=[
+           "python3", "-c",
+           "import onnxruntime; print(onnxruntime.get_device())"
+       ]
+   )
+   assert result.strip() == "GPU"
    ```
 
 **Expected Results**:
 
-- HardwareProfile API version is `infrastructure.opendatahub.io/v1`
-- InferenceService reaches `Ready` condition within 300 seconds
-- Predictor pod is `Running` on a node with `nvidia.com/gpu`
-  allocatable capacity greater than zero
-- Pod resource requests include `nvidia.com/gpu: 1`
-- Pod tolerations include `nvidia.com/gpu` operator `Exists`, effect
-  `NoSchedule`
-- No GPU-related scheduling warnings or errors in `oc describe pod`
+- InferenceService reaches `Ready` condition (handled by
+  `create_isvc` fixture)
+- Predictor pod is `Running` on a node with GPU capacity
+- Pod resource limits include `nvidia.com/gpu: "1"`
+- Container logs show `CUDAExecutionProvider` appearing before
+  `CPUExecutionProvider`
+- `onnxruntime.get_device()` inside the container returns `"GPU"`
 
-**Notes**: To be filled later in the process.
+**Notes**: Absorbs old TC-DEPLOY-003 (pod log/device checks) and
+old TC-INFER-005 (CUDA EP check). HardwareProfile verification
+removed; GPU resources injected directly via `create_isvc`
+`gpu_count` parameter.

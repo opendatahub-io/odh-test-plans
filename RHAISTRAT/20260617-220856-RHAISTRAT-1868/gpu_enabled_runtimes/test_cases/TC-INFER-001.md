@@ -4,87 +4,99 @@ source_key: RHAISTRAT-1868
 priority: P0
 status: Draft
 automation_status: Not Started
-last_updated: "2026-07-17"
+last_updated: "2026-07-21"
 upgrade_phase: post
 ---
 # TC-INFER-001: GPU inference correctness via KServe V2 infer endpoint
 
-**Objective**: Verify that the `mlserver-cuda-runtime` produces correct
-inference results when sending a prediction request to the KServe V2
-`/v2/models/{model}/infer` endpoint on port 8080.
+**Objective**: Verify model readiness, server health, and correct
+inference results when sending a prediction request through the
+external route to the KServe V2 `/v2/models/{model}/infer`
+endpoint on the `mlserver-cuda-runtime`.
 
 **Preconditions**:
 
-- OCP 4.20+ cluster with RHOAI 3.5 GA and NVIDIA GPU Operator 12.9+
-- InferenceService `resnet-gpu` deployed with `mlserver-cuda-runtime`
-  and Ready (TC-DEPLOY-002)
-- ResNet-50 ONNX model loaded from Red Hat-maintained S3 bucket with
-  known expected outputs for a reference input image
+- OCP 4.20+ cluster with RHOAI 3.5 GA and NVIDIA GPU Operator
+  12.9+
+- InferenceService deployed with `mlserver-cuda-runtime`,
+  `gpu_count=1`, and `external_route=True` (TC-DEPLOY-002)
+- ResNet-50 ONNX model loaded from S3
+
+**Markers**:
+
+```python
+pytestmark = pytest.mark.usefixtures("valid_aws_config")
+
+@pytest.mark.model_server_gpu
+@skip_if_no_supported_accelerator_type
+```
 
 **Test Steps**:
 
-1. Obtain the InferenceService URL:
+1. Verify model readiness via the V2 model ready endpoint.
+   Absorbed from old TC-INFER-003:
 
-   ```bash
-   URL=$(oc get inferenceservice resnet-gpu \
-     -o jsonpath='{.status.url}')
+   ```python
+   from mlserver.probes.utils import exec_http_probe
+
+   http_get = {
+       "path": "/v2/models/{model}/ready",
+       "port": 8080,
+   }
+   result = exec_http_probe(pod, http_get)
+   assert result is True
    ```
 
-2. Send an inference request with a known input:
+2. Verify server health via the V2 health ready endpoint.
+   Absorbed from old TC-INFER-004:
 
-   ```bash
-   curl -s -X POST "${URL}/v2/models/resnet-gpu/infer" \
-     -H "Content-Type: application/json" \
-     -d @resnet-input.json
+   ```python
+   http_get = {
+       "path": "/v2/health/ready",
+       "port": 8080,
+   }
+   result = exec_http_probe(pod, http_get)
+   assert result is True
    ```
 
-3. Parse the response and verify the predicted class matches the
-   known expected output for the reference input.
-4. Verify the response conforms to KServe V2 inference protocol
-   structure.
+3. Send an inference request using the external route URL and
+   `RESNET50_REST_INPUT_QUERY` constant. Input tensor name must
+   match the ONNX model's actual input node. Shape is
+   `[1, 3, 224, 224]`:
+
+   ```python
+   url = get_exposed_isvc_url(isvc)
+   response = send_rest_request(
+       url=url,
+       input_data=RESNET50_REST_INPUT_QUERY,
+   )
+   ```
+
+4. Validate response structure using `validate_deterministic_snapshot`.
+   Do NOT assert specific class indices (e.g., class 285):
+
+   ```python
+   validate_deterministic_snapshot(response)
+   ```
 
 **Expected Results**:
 
-- Response HTTP status code is `200`
-- Response body contains `"model_name": "resnet-gpu"` and an
-  `"outputs"` array
-- The top predicted class index matches the known expected output
-  for the reference input (e.g., class 285 for a golden retriever
-  image in ImageNet)
-- Response includes `"id"` field matching the request ID
+- Model readiness probe returns success at
+  `/v2/models/{model}/ready`
+- Server health probe returns success at `/v2/health/ready`
+- Response is a non-empty dict with an `"outputs"` list
+- `outputs[0]["data"]` is a non-empty list of int/float values
+- `validate_deterministic_snapshot` passes for response structure
 
 **Test Data**:
 
-```json
-{
-  "id": "infer-001",
-  "inputs": [
-    {
-      "name": "input",
-      "shape": [1, 3, 224, 224],
-      "datatype": "FP32",
-      "data": "<flattened_pixel_values_for_golden_retriever_image>"
-    }
-  ]
-}
-```
+Use `RESNET50_REST_INPUT_QUERY` constant (from
+`mlserver/constant.py`). The input tensor name must match the
+ONNX model's actual input node. For ResNet-50 ONNX models the
+input is typically named `data` or `input.1` with shape
+`[1, 3, 224, 224]` (NCHW, ImageNet-normalized).
 
-**Expected Response**:
-
-```json
-{
-  "id": "infer-001",
-  "model_name": "resnet-gpu",
-  "model_version": "1",
-  "outputs": [
-    {
-      "name": "output",
-      "shape": [1, 1000],
-      "datatype": "FP32",
-      "data": [0.0, 0.0, "...", 0.92, "..."]
-    }
-  ]
-}
-```
-
-**Notes**: To be filled later in the process.
+**Notes**: Absorbs old TC-INFER-003 (model readiness check) and
+old TC-INFER-004 (server health check). No specific class index
+assertion; structure-only validation via
+`validate_deterministic_snapshot`.

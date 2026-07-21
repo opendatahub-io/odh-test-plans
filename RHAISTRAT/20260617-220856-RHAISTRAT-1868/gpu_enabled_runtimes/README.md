@@ -2,9 +2,9 @@
 
 NVIDIA GPU-accelerated inference for predictive ML workloads via a
 separate MLServer GPU container image (`mlserver-cuda-runtime`) and
-ClusterServingRuntime template.
+ServingRuntime template.
 
-**Last modified**: 2026-07-17
+**Last modified**: 2026-07-21
 
 ## Links
 
@@ -16,18 +16,30 @@ ClusterServingRuntime template.
 ## Test Cases
 
 - **Test Case Index**: [test_cases/INDEX.md](test_cases/INDEX.md)
-- **Total**: 41 test cases (19 P0, 17 P1, 5 P2)
+- **Total**: 17 test cases (8 P0, 8 P1, 1 P2)
 - **Categories**: DEPLOY, INFER, COMPAT, FALLBACK, DISC, BUILD, PERF,
-  AIRGAP, RBAC, UPGRADE, E2E
+  RBAC, UPGRADE
 
 ## Test Implementation
 
 Automated tests will be implemented in:
 
-- `opendatahub-tests` repository for E2E and integration tests
-- Component-level tests in `odh-model-controller` for template validation
+- `opendatahub-tests` repository using `ocp-resources` Python library,
+  `ServingRuntimeFromTemplate`, `create_isvc` fixtures
+- TC-DISC-001 is manual (Dashboard UI — incompatible with pytest)
 
 ## Changelog
+
+### v1.3.0 (2026-07-21)
+
+- PR review feedback: consolidated 41 to 17 TCs (redundancy analysis)
+- Corrected resource kind to namespace-scoped ServingRuntime
+- Corrected CPU runtime name to mlserver-runtime
+- Fixed CSV namespace to redhat-ods-operator
+- Corrected CUDA EP configurability (overridable via env var)
+- Fixed silent CPU fallback behavior (Running, not Pending)
+- Aligned all TCs with opendatahub-tests framework conventions
+- Removed AIRGAP and E2E categories
 
 ### v1.2.0 (2026-07-17)
 
