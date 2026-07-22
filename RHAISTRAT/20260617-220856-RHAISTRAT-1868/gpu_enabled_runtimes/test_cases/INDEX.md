@@ -2,6 +2,8 @@
 
 **Parent Test Plan**: [TestPlan.md](../TestPlan.md)
 
+**Implementation Guidance**: See [TestPlan.md Section 10](../TestPlan.md#10-implementation-guidance) for framework alignment requirements, required additions to `opendatahub-tests`, and key implementation notes.
+
 ## Quick Stats
 
 | Metric | Count |

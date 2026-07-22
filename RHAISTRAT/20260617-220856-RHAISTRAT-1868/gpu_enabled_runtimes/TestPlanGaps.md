@@ -2,8 +2,8 @@
 feature: gpu_enabled_runtimes
 source_key: RHAISTRAT-1868
 status: Open
-gap_count: 7
-last_updated: '2026-07-17'
+gap_count: 8
+last_updated: '2026-07-22'
 ---
 # Gaps — GPU Enabled Runtimes for Predictive Machine Learning
 
@@ -61,16 +61,28 @@ The following gaps were resolved by the context document
 - ~~gRPC support status for MLServer GPU image unclear~~ — **Resolved**:
   not in scope; REST/HTTP V2 only on port 8080
 
-### Test Case Coverage (3 of 4 resolved)
+### Test Case Coverage (2 of 3 resolved)
 
 - ~~No test cases for dynamic batching behavior~~ — **Resolved**: dynamic
   batching out of scope for this release
 - ~~No test cases for gRPC inference~~ — **Resolved**: gRPC out of scope
   for this release
-- ~~No E2E coverage for P1 config/build components~~ — **Resolved**: P1
-  components will remain at P1; no promotion criteria defined
 
 ## Open Gaps
+
+### Test Case Coverage
+
+- **E2E coverage for P1 config/build components** — Dedicated E2E test
+  cases were removed during PR consolidation (41→17 TCs). P1
+  config/build components (CSV `relatedImages`, image architecture
+  separation, template processing) are now covered by TC-BUILD-001 and
+  TC-BUILD-002, which provide functional validation but not full E2E
+  user journey coverage. No promotion criteria defined for elevating
+  these to P0.
+  Would be resolved by: defining concrete promotion criteria or
+  accepting current P1 coverage as sufficient
+
+
 
 ### Scope & Endpoints
 

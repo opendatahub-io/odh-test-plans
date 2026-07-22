@@ -8,8 +8,8 @@ components:
 - Model Runtimes
 additional_docs:
 - RHAISTRAT-1868-context.md
-last_updated: '2026-07-21'
-version: 1.3.0
+last_updated: '2026-07-22'
+version: 1.3.1
 reviewers: []
 ---
 # GPU Enabled Runtimes Test Plan
@@ -221,7 +221,10 @@ installation through GPU inference under load.
     `redhat-ods-applications` namespace
 - **ONNX model artifacts**: ResNet-50 (ONNX format) from
   onnx-community/resnet-50-ONNX, hosted on Red Hat-maintained S3
-  bucket (not fetched from HuggingFace during tests)
+  bucket at path `mlserver/model_repository/onnx_resnet50/` (bucket
+  name injected via `models_s3_bucket_name` pytest fixture, not
+  hardcoded; not fetched from HuggingFace during tests; distinct from
+  existing iris model at `mlserver/model_repository/onnx/`)
 - **model-settings.json**: Configuration following upstream MLServer
   settings schema (ModelSettings, ModelParameters, Settings); CUDA EP
   baked into image, not user-configurable
@@ -355,8 +358,8 @@ E2E coverage is now provided by:
 | KServe V2 `/v2/health/ready` (GPU) | TC-INFER-001 |
 | KServe V2 `/v2/models/{model}/infer` (CPU) | TC-COMPAT-001, TC-INFER-002 |
 | KServe V2 `/v2/models/{model}/ready` (CPU) | TC-COMPAT-001 |
-| GPU pod scheduling behavior (no GPU HardwareProfile) | TC-E2E-002 |
-| CUDA execution provider initialization logs | — |
+| GPU pod scheduling (silent CPU fallback) | TC-FALLBACK-001 |
+| CUDA execution provider initialization logs | TC-DEPLOY-002, TC-FALLBACK-001 |
 
 ---
 
@@ -368,14 +371,17 @@ brief justification.
 
 ### 7.1 Disconnected/Air-Gapped
 
-The two-image architecture is specifically designed so CPU-only and
-air-gapped clusters do not need to mirror the ~500MB–1GB CUDA payload.
+The two-image architecture ensures that CPU workloads do not require the
+GPU image to be pulled, avoiding the ~500MB–1GB CUDA payload for
+CPU-only deployments. Note: Both CPU and GPU MLServer images and their
+ServingRuntime templates always co-exist on all clusters (including
+air-gapped environments), pre-installed together by DevOps automation.
 GPU runtime air-gapped deployment requires two conditions: (1) GPU image
 mirrored to internal registry, and (2) ONNX model pre-staged to
 in-cluster S3-compatible storage or PVC. Testing considerations:
 
-- Verify CPU-only air-gapped deployments function without any reference
-  to or dependency on the GPU image
+- Verify that deployments using only the CPU runtime in air-gapped
+  environments function without requiring the GPU image to be pulled
 - Confirm the GPU image can be mirrored to a disconnected registry and
   deployed successfully from that registry, with ResNet-50 model
   pre-staged to S3-compatible in-cluster storage (not fetched from
@@ -473,11 +479,11 @@ KServe/odh-model-controller RBAC patterns. Testing considerations:
   restrictions)
 - NVIDIA GPU Operator 12.9+ installed and configured (default
   ClusterPolicy sufficient)
-- CPU-only cluster or node pool for regression and backwards
-  compatibility testing
-- Air-gapped/disconnected environment (recommended) for validating
-  CPU-only deployments without GPU image dependency and GPU deployments
-  with mirrored image + pre-staged model
+- Nodes without GPU resources (for testing CPU runtime and silent CPU
+  fallback scenarios)
+- Air-gapped/disconnected environment (recommended) for validating that
+  CPU workloads do not require the GPU image to be pulled, and for
+  testing GPU deployments with mirrored images + pre-staged models
 - S3-compatible object storage (Red Hat-maintained S3 bucket for
   ResNet-50 model; MinIO or AWS S3 for general testing)
 - Container registry access for pulling both CPU and GPU MLServer
@@ -553,9 +559,61 @@ KServe/odh-model-controller RBAC patterns. Testing considerations:
 
 ---
 
-## 10. Appendix
+## 10. Implementation Guidance
 
-### 10.1 Test Case Summary
+### 10.1 Framework Alignment
+
+All test cases in this plan should be implemented using the
+`opendatahub-tests` framework conventions:
+
+- Use `ocp-resources` Python library, not shell `oc` commands
+- Template-based ServingRuntime instantiation via
+  `ServingRuntimeFromTemplate`, not direct YAML apply
+- GPU tests use `external_route=True` and access inference via
+  `get_exposed_isvc_url(isvc)` + `status.url` (same pattern as vLLM
+  and AutoGluon runtimes)
+- Image reference extraction via `get_runtime_image_from_template`
+  from `utilities/serving_runtime.py`
+- Pod operations via `get_pods_by_isvc_label`, `pod.execute()`,
+  `pod.log()`
+
+### 10.2 Required Framework Additions
+
+Before GPU MLServer test implementation, the following must be added
+to `opendatahub-tests`:
+
+- `RuntimeTemplates.MLSERVER_CUDA` constant
+- `ModelInferenceRuntime.MLSERVER_CUDA_RUNTIME` constant
+- `RESNET50_REST_INPUT_QUERY` constant with shape `[1, 3, 224, 224]`
+- ResNet-50 model staged at S3 path
+  `mlserver/model_repository/onnx_resnet50/`
+- Utility functions: `verify_runtime_labels`,
+  `verify_ort_device`, `verify_cuda_ep_active`,
+  `compare_top_k_predictions`
+- Fixtures: `mlserver_cuda_serving_runtime`,
+  `mlserver_cuda_inference_service`, `mlserver_cuda_pod`
+
+### 10.3 Key Implementation Notes
+
+- **Bucket name injection**: Never hardcode S3 bucket names; use
+  `models_s3_bucket_name` pytest fixture
+- **Resource allocation**: `opendatahub-tests` injects GPU resources
+  directly via ISVC spec, not via HardwareProfile CRs (Dashboard-only
+  flow)
+- **Response validation**: `validate_deterministic_snapshot`
+  validates response structure only, not specific class indices or
+  numeric values
+- **Distribution differences**: Base images differ between RHOAI
+  (aipcc/cuda, aipcc/cpu) and ODH (ubi9/ubi-minimal); tests must be
+  parameterized
+- **RBAC tests**: Use `unprivileged_client` fixture and assert
+  `ForbiddenError` exceptions, not shell `oc login` commands
+
+---
+
+## 11. Appendix
+
+### 11.1 Test Case Summary
 
 | Category | Total | P0 | P1 | P2 |
 |----------|-------|----|----|-----|
@@ -570,7 +628,7 @@ KServe/odh-model-controller RBAC patterns. Testing considerations:
 | TC-UPGRADE | 3 | 2 | 1 | 0 |
 | **Total** | **17** | **8** | **8** | **1** |
 
-### 10.2 Component Coverage
+### 11.2 Component Coverage
 
 | Component / Config | Test Cases | Coverage |
 |--------------------|------------|----------|
@@ -595,7 +653,7 @@ KServe/odh-model-controller RBAC patterns. Testing considerations:
 | RBAC (namespace boundary) | TC-RBAC-001 | |
 | Upgrade resilience | TC-UPGRADE-001, TC-UPGRADE-002, TC-UPGRADE-003 | |
 
-### 10.3 Document Change Log
+### 11.3 Document Change Log
 
 | Version | Date | Changes |
 |---------|------|---------|

@@ -70,15 +70,15 @@ error: null
 
 **What still needs attention:**
 
-1. **Runtime version "1.7.1"** -- The test plan references MLServer runtime version 1.7.1 but this version number does not appear in the available source material. Without the full strategy text to confirm, this remains unsourced.
+1. **HardwareProfile resource ranges** -- The `nvidia-gpu-a100` HardwareProfile CR specifies resource limits and requests (e.g., GPU count, memory ranges) that are not traceable to the strategy or any linked documentation. These values may be reasonable defaults, but they are extrapolated rather than grounded.
 
-2. **HardwareProfile resource ranges** -- The `nvidia-gpu-a100` HardwareProfile CR specifies resource limits and requests (e.g., GPU count, memory ranges) that are not traceable to the strategy or any linked documentation. These values may be reasonable defaults, but they are extrapolated rather than grounded.
+2. **Container resource defaults** -- The plan correctly differentiates between GPU runtime (CPU 1-4, Memory 4Gi-8Gi) and CPU runtime (CPU 1-2, Memory 2Gi-4Gi) container resource defaults per their respective templates. The HardwareProfile defaults (CPU 4, Memory 16Gi) are separate node-level resource allocations. This distinction is now documented but the HardwareProfile values remain unsourced.
 
-3. **Container resource defaults discrepancy** -- The plan specifies container defaults of CPU 1-4 and Memory 4Gi-8Gi in one location, while the HardwareProfile defaults specify CPU 4 and Memory 16Gi in another. This inconsistency is not explained or sourced. If both values are correct for different contexts (container-level vs node-level), the plan should clarify the relationship.
+3. **Environment variables** -- Some MLServer environment variables referenced in the test plan follow upstream conventions but include minor extrapolation regarding exact variable names and default values.
 
-4. **Environment variables** -- Some MLServer environment variables referenced in the test plan follow upstream conventions but include minor extrapolation regarding exact variable names and default values.
+**Note:** Runtime version 1.7.1 is grounded in the actual template annotation `opendatahub.io/runtime-version: '1.7.1'` (verified from `mlserver-cuda-template.yaml`).
 
-**Recommendation:** If a future revision cycle is undertaken, source these values from the strategy document or add transparency notes explaining the basis for extrapolation. The current score of 1 reflects that the majority of entries are grounded, but enough unsourced specifics remain to prevent a score of 2.
+**Recommendation:** If a future revision cycle is undertaken, source the HardwareProfile resource ranges from the strategy document or add transparency notes explaining the basis for extrapolation. The current score of 1 reflects that the majority of entries are grounded, but some unsourced specifics remain.
 
 ## Consistency Cross-Checks
 
