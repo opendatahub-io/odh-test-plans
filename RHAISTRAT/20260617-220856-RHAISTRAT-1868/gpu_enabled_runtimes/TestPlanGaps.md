@@ -82,8 +82,6 @@ The following gaps were resolved by the context document
   Would be resolved by: defining concrete promotion criteria or
   accepting current P1 coverage as sufficient
 
-
-
 ### Scope & Endpoints
 
 - **Performance acceptance criteria not quantified** — the strategy
