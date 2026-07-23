@@ -19,7 +19,8 @@ the server remains stable after processing invalid inputs.
 - OCP 4.20+ cluster with RHOAI 3.5 GA and NVIDIA GPU Operator
   12.9+
 - InferenceService deployed with `mlserver-cuda-runtime`,
-  `gpu_count=1`, and `external_route=True` (TC-DEPLOY-002)
+  `nvidia.com/gpu: 1` in resource limits, and `external_route=True`
+  (TC-DEPLOY-002)
 
 **Markers**:
 

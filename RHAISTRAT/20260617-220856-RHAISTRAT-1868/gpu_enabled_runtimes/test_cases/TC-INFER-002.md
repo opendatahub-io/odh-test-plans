@@ -37,6 +37,14 @@ pytestmark = pytest.mark.usefixtures("valid_aws_config")
 
 **Test Steps**:
 
+```python
+# Both ISVCs are provided by class-scoped fixtures:
+#   gpu_isvc — mlserver_cuda_inference_service
+#              (nvidia.com/gpu: 1, external_route=True, resnet-50 ONNX)
+#   cpu_isvc — mlserver_inference_service
+#              (external_route=True, same resnet-50 ONNX model)
+```
+
 1. Obtain both InferenceService URLs via external routes:
 
    ```python

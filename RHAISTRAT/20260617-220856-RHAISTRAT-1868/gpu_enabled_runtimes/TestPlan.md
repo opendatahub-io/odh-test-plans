@@ -8,8 +8,8 @@ components:
 - Model Runtimes
 additional_docs:
 - RHAISTRAT-1868-context.md
-last_updated: '2026-07-22'
-version: 1.3.1
+last_updated: '2026-07-23'
+version: 1.3.2
 reviewers: []
 ---
 # GPU Enabled Runtimes Test Plan
