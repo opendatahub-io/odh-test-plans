@@ -32,6 +32,10 @@ namespace-level isolation between CPU and GPU runtimes.
    ```python
    pytestmark = pytest.mark.usefixtures("valid_aws_config")
 
+   cpu_runtime = ServingRuntimeFromTemplate(
+       template_name=RuntimeTemplates.MLSERVER,
+   )
+
    isvc_cpu = create_isvc(
        model_service_account=mlserver_model_service_account,
        runtime=cpu_runtime,

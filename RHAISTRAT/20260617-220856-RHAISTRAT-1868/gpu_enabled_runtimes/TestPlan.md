@@ -9,7 +9,7 @@ components:
 additional_docs:
 - RHAISTRAT-1868-context.md
 last_updated: '2026-07-23'
-version: 1.3.2
+version: 1.3.3
 reviewers: []
 ---
 # GPU Enabled Runtimes Test Plan
@@ -597,9 +597,13 @@ to `opendatahub-tests`:
 
 - **Bucket name injection**: Never hardcode S3 bucket names; use
   `models_s3_bucket_name` pytest fixture
-- **Resource allocation**: `opendatahub-tests` injects GPU resources
-  directly via ISVC spec, not via HardwareProfile CRs (Dashboard-only
-  flow)
+- **Resource allocation**: In automated pytest tests,
+  `opendatahub-tests` injects GPU resources directly into the ISVC
+  spec (e.g., `nvidia.com/gpu: 1` in resource limits) because
+  HardwareProfile selection is a Dashboard UI flow not accessible
+  from the API. HardwareProfile CRs are validated separately in
+  TC-DISC-001 (manual/Dashboard path). Both paths result in the
+  same GPU resource request on the pod spec.
 - **Response validation**: `validate_deterministic_snapshot`
   validates response structure only, not specific class indices or
   numeric values
@@ -657,6 +661,9 @@ to `opendatahub-tests`:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.3.3 | 2026-07-23 | CodeRabbit review fixes: added cpu_runtime instantiation in TC-COMPAT-002, clarified HardwareProfile vs direct ISVC injection in Section 10.3, corrected stale TC-PERF references in TestPlanGaps.md, added missing changelog entries |
+| 1.3.2 | 2026-07-22 | Follow-up reviewer feedback: corrected E2E coverage matrix reference, documented S3 model path, clarified air-gapped CPU/GPU co-existence, updated TestPlanReview.md grounding and resource defaults |
+| 1.3.1 | 2026-07-22 | Added Section 10 (Implementation Guidance): framework alignment rules, required additions to opendatahub-tests, key implementation notes |
 | 1.3.0 | 2026-07-21 | PR review feedback: consolidated 41→17 TCs, corrected ServingRuntime kind, CPU runtime name, CSV namespace, CUDA EP configurability, template variable, silent CPU fallback, opendatahub-tests framework alignment |
 | 1.2.0 | 2026-07-17 | Updated with RHAISTRAT-1868-context.md; corrected runtime name to mlserver-cuda-runtime; added HardwareProfile specs, probe timings, security context; regenerated 41 test cases |
 | 1.0.0 | 2026-06-17 | Initial test plan |

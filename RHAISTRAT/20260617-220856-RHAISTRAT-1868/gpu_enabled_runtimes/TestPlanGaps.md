@@ -129,9 +129,8 @@ The following gaps were resolved by the context document
 
 ### Test Case Coverage
 
-- **Performance test thresholds not defined** — TC-PERF-001,
-  TC-PERF-002, and TC-PERF-003 measure performance but cannot
-  assert pass/fail against specific SLOs because acceptance criteria
-  are not quantified.
+- **Performance test thresholds not defined** — TC-PERF-001
+  measures performance but cannot assert pass/fail against specific
+  SLOs because acceptance criteria are not quantified.
   Would be resolved by: feature refinement providing concrete
   latency targets and throughput benchmarks
