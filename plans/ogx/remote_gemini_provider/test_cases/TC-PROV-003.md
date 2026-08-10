@@ -3,7 +3,9 @@ test_case_id: TC-PROV-003
 source_key: RHAISTRAT-1245
 priority: P0
 status: Draft
-automation_status: Not Started
+automation_status: Complete
+automation_file: tests/ogx/gemini/test_providers.py
+automation_function: TestGeminiProviders::test_gemini_conditional_activation_with_key
 last_updated: "2026-06-05"
 upgrade_phase: post
 ---

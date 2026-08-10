@@ -3,7 +3,9 @@ test_case_id: TC-EMB-002
 source_key: RHAISTRAT-1245
 priority: P0
 status: Draft
-automation_status: Not Started
+automation_status: Complete
+automation_file: tests/ogx/gemini/test_embeddings.py
+automation_function: TestGeminiEmbeddings::test_embedding_missing_usage_handled
 last_updated: "2026-06-05"
 upgrade_phase: post
 ---

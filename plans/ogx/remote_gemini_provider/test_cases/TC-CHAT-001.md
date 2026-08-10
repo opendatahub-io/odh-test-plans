@@ -3,7 +3,9 @@ test_case_id: TC-CHAT-001
 source_key: RHAISTRAT-1245
 priority: P0
 status: Draft
-automation_status: Not Started
+automation_status: Complete
+automation_file: tests/ogx/gemini/test_chat_completions.py
+automation_function: TestGeminiChatCompletions::test_non_streaming_chat_completion
 last_updated: "2026-06-05"
 upgrade_phase: post
 ---

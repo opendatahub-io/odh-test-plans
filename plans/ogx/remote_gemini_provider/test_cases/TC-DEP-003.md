@@ -3,7 +3,9 @@ test_case_id: TC-DEP-003
 source_key: RHAISTRAT-1245
 priority: P0
 status: Draft
-automation_status: Not Started
+automation_status: Complete
+automation_file: tests/ogx/gemini/test_deployment.py
+automation_function: TestGeminiDeployment::test_operator_injects_gemini_api_key
 last_updated: "2026-06-05"
 upgrade_phase: post
 ---

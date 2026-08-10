@@ -3,7 +3,9 @@ test_case_id: TC-TOOL-002
 source_key: RHAISTRAT-1245
 priority: P2
 status: Draft
-automation_status: Not Started
+automation_status: Complete
+automation_file: tests/ogx/gemini/test_tool_calling.py
+automation_function: TestGeminiToolCalling::test_tool_calling_with_unsupported_schema_fields
 last_updated: "2026-06-05"
 upgrade_phase: post
 ---
