@@ -42,6 +42,9 @@ the deny ratio exceeds 10% and is sustained for 10 minutes.
    least 15 minutes.
 
    ```bash
+   cleanup() { kill "$PID_OK" "$PID_DENY" 2>/dev/null; }
+   trap cleanup EXIT INT TERM
+
    # Valid requests (run in background loop)
    while true; do
      grpcurl -plaintext -d '{"attributes":{"request":{"http":\
@@ -50,6 +53,7 @@ the deny ratio exceeds 10% and is sustained for 10 minutes.
        envoy.service.auth.v3.Authorization/Check
      sleep 0.5
    done &
+   PID_OK=$!
 
    # Invalid requests at ~20% rate (run in background loop)
    while true; do
@@ -60,6 +64,7 @@ the deny ratio exceeds 10% and is sustained for 10 minutes.
        envoy.service.auth.v3.Authorization/Check
      sleep 2
    done &
+   PID_DENY=$!
    ```
 
 4. At T+5m (before the 10-minute `for:` window), query the
@@ -96,7 +101,12 @@ the deny ratio exceeds 10% and is sustained for 10 minutes.
    "High auth denial rate for an Authorino AuthConfig".
 10. Verify the alert annotation `description` contains both
     `$AC_HASH` and `$NS`.
-11. Stop the background traffic generators.
+11. Stop the background traffic generators (also runs
+    automatically via the trap if the test exits early):
+
+    ```bash
+    cleanup
+    ```
 
 **Expected Results**:
 
