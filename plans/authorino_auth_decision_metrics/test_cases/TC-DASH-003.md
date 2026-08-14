@@ -23,8 +23,8 @@ correct deny percentage after generating mixed OK/denied traffic.
 
    ```bash
    curl -s "https://<prometheus-route>/api/v1/query?query=\
-     ((sum(maas:auth_decisions:rate5m{status!=\"OK\"}) / \
-     sum(maas:auth_decisions:rate5m)) > -Inf) or vector(0)" | \
+     (sum(maas:auth_decisions:rate5m{status!=\"OK\"}) / \
+     sum(maas:auth_decisions:rate5m)) > -Inf" | \
      jq '.data.result[0].value[1]'
    ```
 
