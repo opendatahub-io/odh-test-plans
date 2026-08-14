@@ -28,12 +28,15 @@ auth decision metrics across multiple Authorino replicas using
      -n <authorino-namespace> --timeout=120s
    ```
 
-2. Wait for Prometheus to discover and scrape both targets
-   (confirm 2 "up" targets for the ServiceMonitor):
+2. Identify the ServiceMonitor job label and wait for
+   Prometheus to scrape both targets. The job name comes
+   from the ServiceMonitor `authorino-server-metrics`:
 
    ```bash
+   SM_JOB="authorino-server-metrics"
+   NS="<authorino-namespace>"  # kuadrant-system or rh-connectivity-link
    curl -s "https://<prometheus-route>/api/v1/query?query=\
-     up{job=\"authorino-server-metrics\"}" | \
+     up{job=\"${SM_JOB}\",namespace=\"${NS}\"}" | \
      jq '[.data.result[] | select(.value[1] == "1")] | length'
    ```
 
@@ -43,26 +46,27 @@ auth decision metrics across multiple Authorino replicas using
 3. Generate auth traffic for 6 minutes (traffic should be
    load-balanced across replicas).
 
-4. Query per-replica rates using the `instance` label to
-   confirm both replicas received traffic:
+4. Query per-replica rates scoped to the ServiceMonitor job
+   and namespace to confirm both replicas received traffic:
 
    ```bash
    curl -s "https://<prometheus-route>/api/v1/query?query=\
      sum by (instance) (rate(\
      auth_server_authconfig_response_status{\
-     namespace=~\"rh-connectivity-link|kuadrant-system\"}\
+     job=\"${SM_JOB}\",namespace=\"${NS}\"}\
      [5m]))" | jq '.data.result[]'
    ```
 
    Verify at least 2 distinct `instance` values appear with
    non-zero rates.
 
-5. Compute the sum of per-replica rates:
+5. Compute the sum of per-replica rates, scoped to the same
+   job and namespace:
 
    ```bash
    curl -s "https://<prometheus-route>/api/v1/query?query=\
      sum(rate(auth_server_authconfig_response_status{\
-     namespace=~\"rh-connectivity-link|kuadrant-system\"}\
+     job=\"${SM_JOB}\",namespace=\"${NS}\"}\
      [5m]))" | jq '.data.result[0].value[1]'
    ```
 
