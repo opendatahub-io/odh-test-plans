@@ -1,14 +1,14 @@
 ---
 feature: authorino_auth_decision_metrics
 source_key: RHAISTRAT-2418
-score: 9
+score: 10
 pass: true
 verdict: Ready
 scores:
   specificity: 2
   grounding: 2
   scope_fidelity: 2
-  actionability: 1
+  actionability: 2
   consistency: 2
 last_updated: '2026-08-14'
 auto_revised: false
@@ -30,10 +30,10 @@ error: null
 | Specificity | 2/2 | Every risk fails the swap test — NaN deny ratio from 0/0, SHA-256 hash mapping, Prometheus datasource gap are all unique to this feature. Priorities reference MaaSHighAuthDenyRate, recording rules, and promtool by name. |
 | Grounding | 2/2 | 15/15 Section 4 entries grounded in strategy text. Zero fabrications. TBDs are genuine unknowns from the strategy. Dashboard panel queries grounded in PR #1363 implementation. |
 | Scope Fidelity | 2/2 | All 7 strategy deliverables map to test objectives. All 8 out-of-scope items absent from test plan endpoints and test levels. No orphans in either direction. |
-| Actionability | 1/2 | Concrete: specific tools (promtool, grpcurl, oc), file paths to all config resources, metric labels with exact values, PromQL queries for all dashboard panels. Vague: OpenShift version TBD, RHOAI version TBD, RBAC roles described by permission level not named roles, no sample YAML for test data, no instructions for generating auth traffic to trigger lazy-initialized metrics. |
+| Actionability | 2/2 | OCP 4.16+ with rationale (monitoring.rhobs/v1 API group), RHOAI 3.6-ea1 pinned. grpcurl command with exact gRPC service path, port, and JSON payload for generating auth traffic. Named RBAC roles: cluster-admin, cluster-monitoring-view, Perses dashboard viewer, unprivileged user. File paths to all config resources. Full PromQL queries for dashboard verification. |
 | Consistency | 2/2 | All 6 cross-checks pass. Section 10.2 lists all 15 endpoints from Section 4. Test levels match interface types. Section 6 has appropriate pre-create-cases placeholders. NFR categories consistent with feature scope. |
 
-**Total: 9/10 — Verdict: Ready**
+**Total: 10/10 — Verdict: Ready**
 
 ## Grounding Cross-Reference
 
