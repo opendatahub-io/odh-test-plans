@@ -15,34 +15,100 @@ the deny ratio exceeds 10% and is sustained for 10 minutes.
 
 - PrometheusRule with `MaaSHighAuthDenyRate` alert applied
 - Ability to generate denied auth requests (invalid credentials)
+- Identify a unique AuthConfig for this test: record its
+  `authconfig` hash and `namespace` (e.g., via
+  `kubectl get authconfig -n <ns> -o name`)
 
 **Test Steps**:
 
-1. Generate auth traffic with approximately 20% deny rate for
-   15 minutes: 80% valid requests (OK) and 20% invalid requests
-   (UNAUTHENTICATED).
-2. After 15 minutes, query the Prometheus alerts API:
+1. Record the target AuthConfig hash (`$AC_HASH`) and namespace
+   (`$NS`) to use as filters throughout the test.
+2. Confirm the alert is NOT currently firing for this AuthConfig:
 
    ```bash
    curl -s "https://<prometheus-route>/api/v1/alerts" | \
-     jq '.data.alerts[] | select(.labels.alertname ==
-     "MaaSHighAuthDenyRate")'
+     jq '[.data.alerts[] | select(
+       .labels.alertname == "MaaSHighAuthDenyRate" and
+       .labels.authconfig == "'"$AC_HASH"'" and
+       .labels.namespace == "'"$NS"'"
+     )] | length'
    ```
 
-3. Verify the alert is in `firing` state.
-4. Verify the alert has `severity: warning` label.
-5. Verify the alert annotations include a description mentioning
-   the specific `authconfig` and `namespace`.
+   Expected output: `0`
+
+3. Generate auth traffic targeting only that AuthConfig with
+   approximately 20% deny rate: 80% valid requests (OK) and
+   20% invalid requests (UNAUTHENTICATED). Sustain for at
+   least 15 minutes.
+
+   ```bash
+   # Valid requests (run in background loop)
+   while true; do
+     grpcurl -plaintext -d '{"attributes":{"request":{"http":\
+       {"method":"GET","path":"/valid"}}}}' \
+       <authorino-service>:50051 \
+       envoy.service.auth.v3.Authorization/Check
+     sleep 0.5
+   done &
+
+   # Invalid requests at ~20% rate (run in background loop)
+   while true; do
+     grpcurl -plaintext -d '{"attributes":{"request":{"http":\
+       {"method":"GET","path":"/invalid",\
+       "headers":{"authorization":"Bearer EXPIRED"}}}}}' \
+       <authorino-service>:50051 \
+       envoy.service.auth.v3.Authorization/Check
+     sleep 2
+   done &
+   ```
+
+4. At T+5m (before the 10-minute `for:` window), query the
+   alerts API filtered by the exact AuthConfig and namespace:
+
+   ```bash
+   curl -s "https://<prometheus-route>/api/v1/alerts" | \
+     jq '[.data.alerts[] | select(
+       .labels.alertname == "MaaSHighAuthDenyRate" and
+       .labels.authconfig == "'"$AC_HASH"'" and
+       .labels.namespace == "'"$NS"'"
+     )]'
+   ```
+
+   Verify the alert is either absent or in `pending` state
+   (not `firing`).
+
+5. At T+15m (after the 10-minute sustain period), query again
+   with the same filter:
+
+   ```bash
+   curl -s "https://<prometheus-route>/api/v1/alerts" | \
+     jq '[.data.alerts[] | select(
+       .labels.alertname == "MaaSHighAuthDenyRate" and
+       .labels.authconfig == "'"$AC_HASH"'" and
+       .labels.namespace == "'"$NS"'"
+     )]'
+   ```
+
+6. Verify exactly one matching alert is returned.
+7. Verify the alert state is `firing`.
+8. Verify the alert labels include `severity: warning`.
+9. Verify the alert annotation `summary` equals
+   "High auth denial rate for an Authorino AuthConfig".
+10. Verify the alert annotation `description` contains both
+    `$AC_HASH` and `$NS`.
+11. Stop the background traffic generators.
 
 **Expected Results**:
 
-- `MaaSHighAuthDenyRate` alert appears in the alerts API
+- At T+5m: no `firing` alert for `$AC_HASH` / `$NS`
+  (absent or `pending` only)
+- At T+15m: exactly 1 alert matches the filter
 - Alert state is `firing`
-- Alert labels include `severity: warning`, `authconfig`, and
-  `namespace`
-- Alert annotation `summary` contains "High auth denial rate
+- Alert labels: `severity: warning`,
+  `authconfig: $AC_HASH`, `namespace: $NS`
+- Alert annotation `summary` is "High auth denial rate
   for an Authorino AuthConfig"
-- Alert annotation `description` references the specific
-  authconfig hash and namespace
+- Alert annotation `description` contains both `$AC_HASH`
+  and `$NS`
 
 **Notes**: To be filled later in the process.
