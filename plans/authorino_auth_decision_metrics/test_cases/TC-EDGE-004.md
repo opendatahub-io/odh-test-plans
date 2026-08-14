@@ -19,42 +19,85 @@ auth decision metrics across multiple Authorino replicas using
 
 **Test Steps**:
 
-1. Scale Authorino to 2 replicas:
+1. Scale Authorino to 2 replicas and wait for rollout:
 
    ```bash
    kubectl scale deployment/authorino \
      -n <authorino-namespace> --replicas=2
+   kubectl rollout status deployment/authorino \
+     -n <authorino-namespace> --timeout=120s
    ```
 
-2. Wait for both pods to be ready.
+2. Wait for Prometheus to discover and scrape both targets
+   (confirm 2 "up" targets for the ServiceMonitor):
+
+   ```bash
+   curl -s "https://<prometheus-route>/api/v1/query?query=\
+     up{job=\"authorino-server-metrics\"}" | \
+     jq '[.data.result[] | select(.value[1] == "1")] | length'
+   ```
+
+   Retry until output is `2` (may take up to 2 scrape
+   intervals, ~60s at 30s interval).
+
 3. Generate auth traffic for 6 minutes (traffic should be
    load-balanced across replicas).
-4. Query raw metrics to verify both targets are scraped:
+
+4. Query per-replica rates using the `instance` label to
+   confirm both replicas received traffic:
 
    ```bash
    curl -s "https://<prometheus-route>/api/v1/query?query=\
-     auth_server_authconfig_response_status" | \
-     jq '.data.result | length'
+     sum by (instance) (rate(\
+     auth_server_authconfig_response_status{\
+     namespace=~\"rh-connectivity-link|kuadrant-system\"}\
+     [5m]))" | jq '.data.result[]'
    ```
 
-5. Query the recording rule:
+   Verify at least 2 distinct `instance` values appear with
+   non-zero rates.
+
+5. Compute the sum of per-replica rates:
 
    ```bash
    curl -s "https://<prometheus-route>/api/v1/query?query=\
-     maas:auth_decisions:rate5m" | jq '.data.result[]'
+     sum(rate(auth_server_authconfig_response_status{\
+     namespace=~\"rh-connectivity-link|kuadrant-system\"}\
+     [5m]))" | jq '.data.result[0].value[1]'
    ```
 
-6. Verify the recording rule aggregates across both targets
-   (result should be grouped by `authconfig, namespace, status`
-   — not by `instance` or `pod`).
+6. Query the recording rule output:
+
+   ```bash
+   curl -s "https://<prometheus-route>/api/v1/query?query=\
+     sum(maas:auth_decisions:rate5m)" | \
+     jq '.data.result[0].value[1]'
+   ```
+
+7. Compare the values from steps 5 and 6 — they should match
+   within 5% tolerance (minor differences from scrape timing
+   are expected).
+
+8. Verify the recording rule output label set contains only
+   `authconfig`, `namespace`, and `status` (no `instance`,
+   `pod`, or `job` labels leaked through):
+
+   ```bash
+   curl -s "https://<prometheus-route>/api/v1/query?query=\
+     maas:auth_decisions:rate5m" | \
+     jq '.data.result[0].metric | keys'
+   ```
 
 **Expected Results**:
 
-- Raw metrics show separate series per replica (2x the number
-  of series)
-- Recording rule `sum by (authconfig, namespace, status)` merges
-  replica-level metrics into single per-policy series
-- Total rate approximately equals the sum of per-replica rates
-- Dashboard panels show aggregated data, not per-replica data
+- Both replicas are scraped (`up` count = 2) before traffic
+  generation begins
+- Per-replica rates show at least 2 distinct `instance` values
+  with non-zero rates
+- Sum of per-replica raw rates matches
+  `sum(maas:auth_decisions:rate5m)` within 5% tolerance
+- Recording rule output labels are exactly `["__name__",
+  "authconfig", "namespace", "status"]` — no `instance`,
+  `pod`, or `job` labels present
 
 **Notes**: To be filled later in the process.
