@@ -14,7 +14,11 @@ and panel queries do not expose user-identifying information.
 **Preconditions**:
 
 - Dashboard deployed (TC-DASH-001 passed)
-- Auth traffic generated with real user credentials
+- Auth traffic generated using synthetic test identities only
+  (e.g., test-only API keys or throwaway OIDC tokens from a
+  test IdP). Do not use production or real user credentials.
+  Verify no real credentials appear in test logs, traces,
+  audit records, or test artifacts.
 
 **Test Steps**:
 
