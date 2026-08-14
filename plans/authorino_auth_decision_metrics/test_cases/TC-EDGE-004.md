@@ -89,8 +89,17 @@ auth decision metrics across multiple Authorino replicas using
    ```bash
    curl -s "https://<prometheus-route>/api/v1/query?query=\
      maas:auth_decisions:rate5m" | \
-     jq '.data.result[0].metric | keys'
+     jq -e '(.data.result | length) > 0 and
+       (.data.result | all(
+         .metric | keys == ["__name__",
+         "authconfig", "namespace", "status"]
+       ))'
    ```
+
+   The query must return `true`. It verifies at least one
+   result exists AND every series has exactly the four
+   expected label keys — no `instance`, `pod`, or `job`
+   leaked from any replica.
 
 **Expected Results**:
 
