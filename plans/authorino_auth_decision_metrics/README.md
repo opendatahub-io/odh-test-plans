@@ -18,5 +18,6 @@ Per-policy auth decision metrics from Authorino in the RHOAI monitoring stack.
 ## Test Implementation
 
 Automated tests will be implemented in:
+
 - `deployment/base/observability/` (promtool unit tests for recording rules and alerts)
 - opendatahub-tests repository (integration tests for metrics pipeline and dashboard verification)

@@ -12,16 +12,20 @@ last_updated: "2026-08-14"
 and panel queries do not expose user-identifying information.
 
 **Preconditions**:
+
 - Dashboard deployed (TC-DASH-001 passed)
 - Auth traffic generated with real user credentials
 
 **Test Steps**:
+
 1. Query the `authconfig` variable values (the only user-facing
    filter):
+
    ```bash
    curl -s "https://<prometheus-route>/api/v1/label/\
      authconfig/values" | jq '.data'
    ```
+
 2. Verify all values are SHA-256 hashes (64-char hex strings),
    not user names, email addresses, or other PII.
 3. Review all 8 dashboard panel PromQL queries (from Section 4.1)
@@ -30,6 +34,7 @@ and panel queries do not expose user-identifying information.
    `{{status}}` template variables — not user-identifying fields.
 
 **Expected Results**:
+
 - Dashboard variable filter shows only SHA-256 hashes as
   selectable values
 - No user names, email addresses, or organization identifiers

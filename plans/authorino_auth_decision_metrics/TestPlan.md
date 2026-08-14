@@ -12,6 +12,7 @@ version: 1.1.0
 reviewers: []
 ---
 # Authorino Auth Decision Metrics Test Plan
+
 **MaaS Team – Per-Policy Auth Decision Monitoring**
 
 **Strategy**: [RHAISTRAT-2418](https://redhat.atlassian.net/browse/RHAISTRAT-2418)
@@ -163,12 +164,14 @@ testing of the full observability pipeline.
 - Auth requests to trigger lazy-initialized metrics
   (`auth_server_*` metrics appear after first auth traffic).
   Generate traffic by calling Authorino gRPC Check directly:
+
   ```bash
   grpcurl -plaintext -d '{"attributes": {"request": {"http": \
     {"method": "GET", "path": "/test"}}}}' \
     <authorino-service>:50051 \
     envoy.service.auth.v3.Authorization/Check
   ```
+
   Repeat several times to produce both `OK` and non-`OK` status
   values for recording rule validation.
 - Existing ServiceMonitor configuration:

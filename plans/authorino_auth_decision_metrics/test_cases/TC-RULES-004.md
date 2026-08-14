@@ -12,16 +12,20 @@ last_updated: "2026-08-14"
 rules and alert definitions pass successfully.
 
 **Test Steps**:
+
 1. Clone or access the models-as-a-service repository (branch
    with PR #1363 merged).
 2. Run promtool unit tests:
+
    ```bash
    cd deployment/base/observability
    promtool test rules maas-auth-alerting.unit-tests.yaml
    ```
+
 3. Verify all test cases pass.
 
 **Expected Results**:
+
 - `promtool test rules` exits with code 0
 - Output shows 9 test cases evaluated
 - All tests report `SUCCESS` — no failures or errors
@@ -31,6 +35,7 @@ rules and alert definitions pass successfully.
   and namespace filtering
 
 **Test Data**:
+
 ```bash
 # Unit test file location
 deployment/base/observability/maas-auth-alerting.unit-tests.yaml

@@ -13,18 +13,22 @@ series panel shows stacked area chart with separate series for
 each gRPC status code.
 
 **Preconditions**:
+
 - Dashboard deployed (TC-DASH-001 passed)
 - Mixed auth traffic generated producing both OK and non-OK
   statuses
 
 **Test Steps**:
+
 1. Execute the panel's PromQL query:
+
    ```bash
    curl -s "https://<prometheus-route>/api/v1/query?query=\
      sum by (status) (maas:auth_decisions:rate5m)" | \
      jq '.data.result[] | {status: .metric.status,
      value: .value[1]}'
    ```
+
 2. Verify results contain separate series for `OK` and at
    least one non-OK status (e.g., `UNAUTHENTICATED`).
 3. Verify each series has a positive value.
@@ -33,6 +37,7 @@ each gRPC status code.
    `stack: all`).
 
 **Expected Results**:
+
 - PromQL query returns multiple series, one per status value
 - `OK` series has the highest rate value
 - Non-OK series (e.g., `UNAUTHENTICATED`, `PERMISSION_DENIED`)

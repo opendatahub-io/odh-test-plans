@@ -13,14 +13,17 @@ per-authconfig, per-status 5-minute rates correctly from raw
 `auth_server_authconfig_response_status` counters.
 
 **Preconditions**:
+
 - PrometheusRule with `maas.authorino.auth-decisions` rule group
   applied
 - Auth traffic generated for at least 5 minutes to populate the
   rate window
 
 **Test Steps**:
+
 1. Generate sustained auth traffic (60 requests/minute for 6
    minutes) using grpcurl:
+
    ```bash
    for i in $(seq 1 360); do
      grpcurl -plaintext -d '{"attributes": {"request": {"http": \
@@ -30,17 +33,21 @@ per-authconfig, per-status 5-minute rates correctly from raw
      sleep 1
    done
    ```
+
 2. Query the recording rule output:
+
    ```bash
    curl -s "https://<prometheus-route>/api/v1/query?query=\
      maas:auth_decisions:rate5m" | jq '.data.result[]'
    ```
+
 3. Verify the result contains labels `authconfig`, `namespace`,
    and `status`.
 4. Verify the rate value is approximately 1.0 requests/second
    (60 requests per minute).
 
 **Expected Results**:
+
 - `maas:auth_decisions:rate5m` returns non-empty results
 - Each result has labels `{authconfig, namespace, status}`
 - Rate values are positive and approximately match the generated

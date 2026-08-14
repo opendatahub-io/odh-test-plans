@@ -15,19 +15,24 @@ Authorino rolling updates — no negative spikes or incorrect values
 appear in dashboard panels.
 
 **Preconditions**:
+
 - Auth traffic flowing to generate baseline metrics
 - Dashboard deployed and showing data
 
 **Test Steps**:
+
 1. Record current values of `maas:auth_decisions:rate5m` and
    `maas:auth_deny_ratio:rate5m` as a baseline.
 2. Trigger a rolling update of Authorino:
+
    ```bash
    kubectl rollout restart deployment/authorino \
      -n <authorino-namespace>
    ```
+
 3. Monitor recording rule outputs every 30 seconds during the
    rollout (expected duration: 2-5 minutes):
+
    ```bash
    while true; do
      curl -s "https://<prometheus-route>/api/v1/query?query=\
@@ -36,6 +41,7 @@ appear in dashboard panels.
      sleep 30
    done
    ```
+
 4. Verify no negative values appear in any rate output.
 5. After rollout completes, verify rates return to approximately
    the baseline level.
@@ -43,6 +49,7 @@ appear in dashboard panels.
    (negative spikes, sudden drops to zero).
 
 **Expected Results**:
+
 - `rate()` function handles counter resets automatically — no
   negative values in recording rule outputs
 - Dashboard time series panels show a brief dip (acceptable)

@@ -12,6 +12,7 @@ last_updated: "2026-08-14"
 in the RHOAI metrics catalog with all required fields.
 
 **Test Steps**:
+
 1. Locate the metrics documentation in
    `docs/content/observability/metrics-and-dashboards.md` (or the
    RHOAI metrics catalog location if different).
@@ -35,6 +36,7 @@ in the RHOAI metrics catalog with all required fields.
    queries are provided.
 
 **Expected Results**:
+
 - All 8 metrics/rules/alerts are documented
 - Each entry includes metric name, type, label schema, source
   component, scrape endpoint, and scrape interval

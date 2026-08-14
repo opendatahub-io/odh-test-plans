@@ -13,22 +13,27 @@ when traffic volume is negligible (below the `> 0.001` rps traffic
 floor guard), even if the deny ratio is 100%.
 
 **Preconditions**:
+
 - PrometheusRule with `MaaSHighAuthDenyRate` alert applied
 - No pre-existing firing alerts for `MaaSHighAuthDenyRate`
 
 **Test Steps**:
+
 1. Send a single denied auth request, then stop all traffic.
 2. Wait 15 minutes.
 3. Query the Prometheus alerts API:
+
    ```bash
    curl -s "https://<prometheus-route>/api/v1/alerts" | \
      jq '.data.alerts[] | select(.labels.alertname ==
      "MaaSHighAuthDenyRate")'
    ```
+
 4. Verify the alert is NOT firing despite the deny ratio being
    1.0 (100%).
 
 **Expected Results**:
+
 - `MaaSHighAuthDenyRate` alert does NOT fire
 - The traffic floor guard (`sum(...rate...) > 0.001`) prevents
   alert firing when request rate is negligible
