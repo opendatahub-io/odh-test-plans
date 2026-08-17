@@ -5,10 +5,10 @@
 
 ## Quick Stats
 
-- **Total Test Cases**: 14
-- **P0 (Critical)**: 5
-- **P1 (High)**: 7
-- **P2 (Medium)**: 2
+- **Total Test Cases**: 16
+- **P0 (Critical)**: 6
+- **P1 (High)**: 10
+- **P2 (Medium)**: 0
 
 ## E2E Test Cases
 
