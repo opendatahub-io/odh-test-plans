@@ -16,16 +16,19 @@ activated and returns appropriate errors when `ANTHROPIC_API_KEY` is
 not set.
 
 **Preconditions**:
+
 - RHOAI 3.5 cluster with OGX distribution deployed
 - `ANTHROPIC_API_KEY` environment variable NOT set
 
 **Test Steps**:
+
 1. Deploy the OGX distribution without `ANTHROPIC_API_KEY`
 2. Query `/v1/providers` and verify `remote::anthropic` is absent
 3. Attempt a chat completion request targeting an Anthropic model
 4. Verify the request fails with a descriptive error
 
 **Expected Results**:
+
 - `/v1/providers` response does not include `remote::anthropic`
 - Chat completion request returns an error indicating the Anthropic
   provider is not configured or the model is not available

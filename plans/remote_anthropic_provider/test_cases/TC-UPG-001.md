@@ -16,18 +16,22 @@ configurations with Anthropic endpoints continue to work after
 upgrading to a RHOAI version with native `remote::anthropic` support.
 
 **Preconditions**:
+
 - RHOAI cluster at a version WITHOUT `remote::anthropic` provider
 - Anthropic models configured using the `remote::openai` workaround
   with `network.headers`:
+
   ```yaml
   network:
     headers:
       x-api-key: ${env.EXTERNAL_MODEL_PROVIDER_API_KEY:=placeholder}
       anthropic-version: "2023-06-01"
   ```
+
 - Inference verified working with the workaround configuration
 
 **Test Steps**:
+
 1. Confirm inference to Anthropic models works on the pre-upgrade
    version using the `remote::openai` workaround
 2. Upgrade RHOAI to 3.5 (which includes `remote::anthropic`)
@@ -37,6 +41,7 @@ upgrading to a RHOAI version with native `remote::anthropic` support.
 5. Verify the request still succeeds with HTTP 200
 
 **Expected Results**:
+
 - Pre-upgrade inference request succeeds (baseline)
 - Upgrade completes without modifying existing provider configs
 - Post-upgrade inference using `remote::openai` workaround returns

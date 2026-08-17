@@ -16,21 +16,26 @@ upgrade_phase: both
 without leaking key material.
 
 **Preconditions**:
+
 - RHOAI 3.5 cluster with `remote::anthropic` provider activated
 - `ANTHROPIC_API_KEY` set to an invalid value
 
 **Test Steps**:
+
 1. Deploy the OGX distribution with an invalid `ANTHROPIC_API_KEY`
 2. Send a chat completion request:
+
    ```bash
    curl -s -w "\n%{http_code}" -X POST <ogx-route>/v1/chat/completions \
      -H "Content-Type: application/json" \
      -d '{"model": "<model>", "messages": [{"role": "user", "content": "test"}]}'
    ```
+
 3. Verify the response returns an error status code (401 or 403)
 4. Verify the error message does not contain the API key value
 
 **Expected Results**:
+
 - HTTP 401 or 403 response indicating authentication failure
 - Error response body contains a descriptive message (e.g.,
   "invalid API key" or "authentication failed")

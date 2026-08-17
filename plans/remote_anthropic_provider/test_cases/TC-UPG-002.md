@@ -16,11 +16,13 @@ workaround to the native `remote::anthropic` provider without breaking
 existing inference requests.
 
 **Preconditions**:
+
 - RHOAI 3.5 cluster with both providers available
 - Anthropic models initially configured using `remote::openai`
   workaround with `network.headers`
 
 **Test Steps**:
+
 1. Confirm inference works with `remote::openai` workaround config
 2. Update the provider configuration from `provider_type: remote::openai`
    with `network.headers` to `provider_type: remote::anthropic` with
@@ -32,6 +34,7 @@ existing inference requests.
    the workaround)
 
 **Expected Results**:
+
 - Post-migration inference returns HTTP 200 with a valid completion
 - Per-request API key override via `x-ogx-provider-data` succeeds
   (previously impossible with workaround)

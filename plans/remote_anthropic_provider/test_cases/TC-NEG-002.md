@@ -16,17 +16,21 @@ upgrade_phase: both
 affecting the config-level key.
 
 **Preconditions**:
+
 - RHOAI 3.5 cluster with `remote::anthropic` provider activated
 - Valid config-level `ANTHROPIC_API_KEY` (Key A)
 
 **Test Steps**:
+
 1. Send a request with an invalid key in the override header:
+
    ```bash
    curl -s -w "\n%{http_code}" -X POST <ogx-route>/v1/chat/completions \
      -H "Content-Type: application/json" \
      -H 'x-ogx-provider-data: {"anthropic_api_key": "invalid-key-123"}' \
      -d '{"model": "<model>", "messages": [{"role": "user", "content": "test"}]}'
    ```
+
 2. Verify the response returns an authentication error
 3. Send a follow-up request without the override header (uses
    config-level Key A)
@@ -34,6 +38,7 @@ affecting the config-level key.
    config-level key was not corrupted
 
 **Expected Results**:
+
 - First request returns HTTP 401 or 403
 - Error message does not leak the invalid key value
 - Second request (without override) returns HTTP 200 with a valid

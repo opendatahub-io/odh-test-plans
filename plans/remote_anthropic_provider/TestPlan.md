@@ -14,6 +14,7 @@ version: 1.0.1
 reviewers: []
 ---
 # Remote Anthropic Provider Test Plan
+
 OGX Core Team -- E2E System Testing
 
 **Strategy**: [RHAISTRAT-1246](https://redhat.atlassian.net/browse/RHAISTRAT-1246)
@@ -189,18 +190,23 @@ requiring custom `network.headers` configuration for each deployment.
   `config.yaml`
 - Legacy workaround YAML configuration for backwards compatibility
   validation. Example from strategy:
+
   ```yaml
   network:
     headers:
       x-api-key: ${env.EXTERNAL_MODEL_PROVIDER_API_KEY:=placeholder}
       anthropic-version: "2023-06-01"
   ```
+
 - Per-request API key override header example:
+
   ```http
   x-ogx-provider-data: {"anthropic_api_key": "<second-api-key>"}
   ```
+
 - Chat completion request payloads with streaming enabled/disabled and
   temperature/sampling parameters. Example:
+
   ```json
   {
     "model": "<anthropic-model-id>",
@@ -209,6 +215,7 @@ requiring custom `network.headers` configuration for each deployment.
     "temperature": 0.7
   }
   ```
+
 - Tool calling test payloads for chat completions API and responses API
 - MCP server configurations compatible with Anthropic models
 - Sample model listing responses in Anthropic's `/v1/models` format
@@ -243,12 +250,14 @@ the deployment and testing operations described in the strategy:
   logs (`oc logs`), and verifying environment variable injection
 - `curl` for REST API endpoint testing: `/v1/models`, `/v1/providers`,
   chat completions, and responses endpoints. Example:
+
   ```bash
   curl -X POST <ogx-route>/v1/chat/completions \
     -H "Content-Type: application/json" \
     -H "x-ogx-provider-data: {\"anthropic_api_key\": \"<key>\"}" \
     -d '{"model": "<model>", "messages": [{"role": "user", "content": "test"}]}'
   ```
+
 - `jq` for JSON response validation (comparing Anthropic `/v1/models`
   format against expected AsyncAnthropic SDK output structure)
 - `openssl s_client` or equivalent for TLS version verification on
