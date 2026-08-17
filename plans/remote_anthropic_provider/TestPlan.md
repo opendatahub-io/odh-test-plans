@@ -196,7 +196,7 @@ requiring custom `network.headers` configuration for each deployment.
       anthropic-version: "2023-06-01"
   ```
 - Per-request API key override header example:
-  ```
+  ```http
   x-ogx-provider-data: {"anthropic_api_key": "<second-api-key>"}
   ```
 - Chat completion request payloads with streaming enabled/disabled and
