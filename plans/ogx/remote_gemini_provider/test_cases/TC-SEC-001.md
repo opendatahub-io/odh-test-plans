@@ -3,7 +3,9 @@ test_case_id: TC-SEC-001
 source_key: RHAISTRAT-1245
 priority: P1
 status: Draft
-automation_status: Not Started
+automation_status: Complete
+automation_file: tests/ogx/gemini/test_security.py
+automation_function: TestGeminiSecurity::test_api_key_not_exposed
 last_updated: "2026-06-05"
 upgrade_phase: post
 ---

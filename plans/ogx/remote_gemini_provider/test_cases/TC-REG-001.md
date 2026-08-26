@@ -3,7 +3,9 @@ test_case_id: TC-REG-001
 source_key: RHAISTRAT-1245
 priority: P0
 status: Draft
-automation_status: Not Started
+automation_status: Complete
+automation_file: tests/ogx/gemini/test_regression.py
+automation_function: TestGeminiRegression::test_remote_openai_unaffected
 last_updated: "2026-06-05"
 upgrade_phase: both
 ---

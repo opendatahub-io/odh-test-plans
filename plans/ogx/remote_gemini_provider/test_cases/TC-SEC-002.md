@@ -3,7 +3,9 @@ test_case_id: TC-SEC-002
 source_key: RHAISTRAT-1245
 priority: P2
 status: Draft
-automation_status: Not Started
+automation_status: Complete
+automation_file: tests/ogx/gemini/test_security.py
+automation_function: TestGeminiSecurity::test_tls_enforced_for_gemini_egress
 last_updated: "2026-06-05"
 upgrade_phase: post
 ---
